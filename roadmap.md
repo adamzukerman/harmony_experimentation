@@ -13,3 +13,4 @@
 ## Ideas for Next Steps
 
 1. Control a note's frequency with keyboard inputs
+   * I can control a note with the keys but I can't get the graph to update yet. 
