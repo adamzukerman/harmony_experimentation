@@ -3,6 +3,8 @@ import pynput.keyboard as kb
 import matplotlib.pyplot as plt
 import time
 
+plt.ion()
+
 fig, ax = plt.subplots(1, 1)
 ax.set_aspect('equal')
 ax.set_xlim(0, 1000)
@@ -17,9 +19,13 @@ def on_press(key):
         s.stop()
         print("Terminating")
         return False
-    if key == kb.KeyCode.from_char('u'):
-        note1.setFreq(note1.freq * pow(2, 1/12))
-    if key == kb.KeyCode.from_char('U'):
+    elif key == kb.KeyCode.from_char('u'):
+        note1.freq *= pow(2, 1/12)
+        # global plot
+        # plot.set_ydata([note1.freq])
+        # global fig 
+        # fig.canvas.draw_idle()
+    elif key == kb.KeyCode.from_char('U'):
         note1.freq *= pow(2, -1/12)
     else:
         print("key behavior undefined")
@@ -32,9 +38,13 @@ note1 = pyo.Sine(freq=440, mul=0.4).out()
 
 # Looks like I can't mix matplotlib and pyo GUI
 # s.gui(locals())
-
+plt.show()
+dot1 = ax.scatter([500], [note1.freq])
 while listener.is_alive():
     # plt.scatter(x=[500], y=note1.freq)
     # plt.show()
-    print(note1.freq)
-    time.sleep(0.5)
+    dot1.set_offsets((500, note1.freq))
+    fig.canvas.flush_events()
+    # fig.show() # This doens't work??
+
+# plt.show()
