@@ -35,7 +35,6 @@ def recordOver():
 # sv = CallAfter(saveToDisk, time=2).play()
 # CallAfter(recordOver, time=2)
 
-end = False
 #create key listener
 def on_press(key):
     if key == kb.KeyCode.from_char('r'):
@@ -43,8 +42,6 @@ def on_press(key):
         print("recording again")
     elif key == kb.KeyCode.from_char('q'):
         print("ending session")
-        global end 
-        end = True 
         return False
     elif key == kb.KeyCode.from_char('s'):
         print("Starting Pyo Server")
