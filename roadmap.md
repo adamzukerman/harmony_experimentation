@@ -8,12 +8,13 @@
 1. Make a pitch graph that I can interact with
 1. Control a note's frequency with keyboard inputs
 1. See if I can graph a note frequency
+1. Modify graph to be able to move the note while mouse is clicked
+1. Make a graph that updates with time and shows note frequencies as well as previous frequencies
 
 ## Ideas for Next Steps
 
-1. Make a graph that updates with time and shows note frequencies
+1. Add another note
 1. Learn to make a GUI with slider that control sine waves
-1. Modify graph to be able to move the note while mouse is clicked
 
 
 ## Handwritten Notes

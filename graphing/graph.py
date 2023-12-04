@@ -4,12 +4,20 @@ import matplotlib.pyplot as plt
 import time
 
 MOUSE_PRESSED = False
+FRAME_RATE = 30
+TRAIL_TIME = 2 # number of seconds to show of pitch history
+PITCH_MAX = 1000
+frame_length = 1/FRAME_RATE
+
+
+freq_history = [0]*(TRAIL_TIME * FRAME_RATE)
 
 plt.ion()
 fig, ax = plt.subplots(1, 1)
-ax.set_aspect('equal')
-ax.set_xlim(0, 1000)
-ax.set_ylim(0, 1000)
+ax.set_xlim(0, 2*len(freq_history)) # have the note in middle of graph
+ax.set_ylim(0, PITCH_MAX)
+ax.set_aspect((2 * len(freq_history)) / PITCH_MAX)
+note_x = len(freq_history)
 
 s = pyo.Server().boot()
 s.start()
@@ -31,6 +39,8 @@ def on_press(key):
         print("key behavior undefined")
 
 def on_mouse_press(event):
+    if not event.ydata:
+        return None
     y_pos = float(event.ydata) # pyo can't handle numpy dtypes
     note1.freq = float(y_pos) 
     global MOUSE_PRESSED
@@ -42,7 +52,7 @@ def on_mouse_release(event):
 
 def on_mouse_move(event):
     global MOUSE_PRESSED
-    if not MOUSE_PRESSED:
+    if (not MOUSE_PRESSED) or (not event.ydata):
         return None
     note1.freq = float(event.ydata)
 
@@ -56,8 +66,25 @@ release_id = fig.canvas.mpl_connect('button_release_event', on_mouse_release)
 # s.gui(locals())
 
 plt.show()
-dot1 = ax.scatter([500], [note1.freq])
+trail, = ax.plot(freq_history)
+dot1 = ax.scatter([len(freq_history)], [note1.freq])
+frame_count = 1
+
 while listener.is_alive():
-    dot1.set_offsets([(500, note1.freq)])
+    start = time.time()
+    history_index = frame_count % len(freq_history)
+    freq_history[history_index] = note1.freq
+
+    if history_index == len(freq_history) - 1:
+        trail.set_ydata(freq_history)
+    else:
+        trail.set_ydata(freq_history[history_index + 1:] + freq_history[:history_index + 1])
+    
+    dot1.set_offsets([(note_x, note1.freq)])
     fig.canvas.flush_events()
     # fig.show() # This doens't work?? I'm supposed to use another way of refreshing with interactive mode.
+
+    frame_count += 1
+    end = time.time()
+    break_time = max(0, frame_length - (end - start)) 
+    time.sleep(max(0, break_time)) # Try to make evey frame a standard amount of time.
