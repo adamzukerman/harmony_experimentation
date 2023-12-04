@@ -7,9 +7,9 @@ MOUSE_PRESSED = False
 FRAME_RATE = 30
 TRAIL_TIME = 2 # number of seconds to show of pitch history
 PITCH_MAX = 1000
+
+
 frame_length = 1/FRAME_RATE
-
-
 freq_history = [0]*(TRAIL_TIME * FRAME_RATE)
 
 plt.ion()
@@ -22,6 +22,7 @@ note_x = len(freq_history)
 s = pyo.Server().boot()
 s.start()
 note1 = pyo.Sine(freq=440, mul=0.4).out()
+note2 = pyo.Sine(freq=note1.freq/2, mul=note1.mul).out()
 
 def on_press(key):
     if key == kb.KeyCode.from_char('q'):
@@ -33,6 +34,10 @@ def on_press(key):
         note1.freq *= pow(2, 1/12)
     elif key == kb.KeyCode.from_char('U'):
         note1.freq *= pow(2, -1/12)
+    elif key == kb.KeyCode.from_char('i'):
+        note2.freq *= pow(2, 1/12)
+    elif key == kb.KeyCode.from_char('I'):
+        note2.freq *= pow(2, -1/12)
     elif key == kb.Key.shift:
         pass
     else:
@@ -67,7 +72,8 @@ release_id = fig.canvas.mpl_connect('button_release_event', on_mouse_release)
 
 plt.show()
 trail, = ax.plot(freq_history)
-dot1 = ax.scatter([len(freq_history)], [note1.freq])
+note1_dot = ax.scatter([len(freq_history)], [note1.freq])
+note2_dot = ax.scatter([len(freq_history)], [note2.freq])
 frame_count = 1
 
 while listener.is_alive():
@@ -80,7 +86,7 @@ while listener.is_alive():
     else:
         trail.set_ydata(freq_history[history_index + 1:] + freq_history[:history_index + 1])
     
-    dot1.set_offsets([(note_x, note1.freq)])
+    note1_dot.set_offsets([(note_x, note1.freq)])
     fig.canvas.flush_events()
     # fig.show() # This doens't work?? I'm supposed to use another way of refreshing with interactive mode.
 
