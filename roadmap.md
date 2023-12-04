@@ -29,3 +29,9 @@
 7. Make a graph that updates with time and shows note frequencies as well as previous frequencies
 
 ## Handwritten Notes
+
+
+## Ideas Ideas fort the Distant Future
+* Convert this into a viewable web page somehow
+  * Could also post a video with the published code
+* Create a program that decomposes instruments/sounds into synthesizer settings (like amplitudes of triangle/sine/etc. waves)
