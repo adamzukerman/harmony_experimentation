@@ -7,7 +7,7 @@ import math
 MOUSE_PRESSED = False
 FRAME_RATE = 30
 TRAIL_TIME = 2 # number of seconds to show of pitch history
-PITCH_MAX = 1000
+PITCH_MAX = 4000
 A = 440
 STARTING_FREQ_1 = 440
 STARTING_FREQ_2 = 220
@@ -20,8 +20,9 @@ freq_history = [0]*(TRAIL_TIME * FRAME_RATE)
 plt.ion()
 fig, (note_ax, dist_ax) = plt.subplots(1, 2)
 note_ax.set_xlim(0, 2*len(freq_history)) # have the note in middle of graph
-note_ax.set_ylim(0, PITCH_MAX)
-note_ax.set_aspect((2 * len(freq_history)) / PITCH_MAX)
+note_ax.set_yscale('log')
+note_ax.set_ylim(50, PITCH_MAX)
+# note_ax.set_aspect((2 * len(freq_history)) / PITCH_MAX)
 dist_ax.set_xlim(-1, 1)
 # dist_ax.set_ylim(0, PITCH_MAX)
 dist_ax.set_ylim(0, 0.1) # used for dissonance equation
