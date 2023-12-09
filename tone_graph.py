@@ -38,6 +38,7 @@ s.start()
 # note2 = pyo.Sine(freq=STARTING_FREQ_2, mul=note1.get_mul()).out()
 note1 = Tone(fund_freq=440, mul=0.4)
 note1.set_random_overtones(15)
+print("nummber of overtones for note1: ", len(note1._get_sines().items()))
 note1.out()
 note2 = Tone(fund_freq=220, mul=0.4)
 note2.set_random_overtones(15)
@@ -144,9 +145,9 @@ while listener.is_alive():
         )
 
     note1_dot.set_offsets([(note_x, note1.get_fund_freq())])
-    bar.set_height(dissonance(note1, note2))
+    dissonance = note1.calc_tone_dissonance(note2)
+    bar.set_height(dissonance)
     fig.canvas.flush_events()
-    # fig.show() # This doens't work?? I'm supposed to use another way of refreshing with interactive mode.
 
     frame_count += 1
     end = time.time()
