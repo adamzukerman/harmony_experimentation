@@ -3,13 +3,11 @@
 ## Steps to Making a Harmony Stabilization Application
 
 ## Ideas for Next Steps
-* create a tone class that captures the harmonic spectrum of a sound.
 * Create a circular list for holding running histories
+* Modify the dissonance calculation to take into account all the overtones of the tones
 * make the dissonance look more like the moving note values instead of the bar graph
 
 ## Bigger Ideas
-* Create another graph that shows the dissonance of the given notes (after adding at least one more note)
-   - Use this resource to calculate dissonance: https://music.stackexchange.com/questions/4439/is-there-a-way-to-measure-the-consonance-or-dissonance-of-a-chord
 * Make a GUI with slider that controls sine waves
 * Create options to add notes
 * Create options to adjust step size of frequency shifting buttons for fine-tuning
@@ -22,6 +20,7 @@
    * It should have get_next_index() and to_list() functions
 
 ### Completed
+* create a tone class that captures the harmonic spectrum of a sound.
 * put a log scale to the graph
 * Create and test the dissonance function http://www.acousticslab.org/learnmoresra/moremodel.html
 * On the second graph, put the dissonance between the notes
