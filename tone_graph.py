@@ -4,6 +4,7 @@ import pynput.keyboard as kb
 import matplotlib.pyplot as plt
 import time
 import math
+from circular_list import CircularList
 
 # Setting up file-wide constants
 MOUSE_PRESSED = False
@@ -19,7 +20,9 @@ notes = [A * pow(2, i * 1 / 12) for i in range(40)] + [
 
 
 frame_length = 1 / FRAME_RATE
-freq_history = [0] * (TRAIL_TIME * FRAME_RATE)
+freq_history = CircularList(TRAIL_TIME * FRAME_RATE)
+freq_history.set_all_values(0)
+# freq_history = [0] * (TRAIL_TIME * FRAME_RATE)
 
 # Setting up graph properties
 plt.ion()
@@ -43,21 +46,6 @@ note1.out()
 note2 = Tone(fund_freq=220, mul=0.4)
 note2.set_random_overtones(15)
 note2.out()
-
-
-def dissonance(note1, note2):
-    # Optimization note: calculating constants on every call
-    X = note1.get_mul() * note2.get_mul()
-    Y = 2 * min(note1.get_mul(), note2.get_mul()) / (note1.get_mul() + note2.get_mul())
-    b1 = 3.5
-    b2 = 5.75
-    s1 = 0.0207
-    s2 = 18.96
-    s = 0.24 / (s1 * min(note1.get_fund_freq(), note2.get_fund_freq()) + s2)
-    dist = abs(note1.get_fund_freq() - note2.get_fund_freq())
-    Z = pow(math.e, -1 * b1 * s * dist) - pow(math.e, -1 * b2 * s * dist)
-    R = pow(X, 0.1) * 0.5 * pow(Y, 3.11) * Z
-    return R
 
 
 def on_press(key):
@@ -122,27 +110,29 @@ press_id = fig.canvas.mpl_connect("button_press_event", on_mouse_press)
 move_id = fig.canvas.mpl_connect("motion_notify_event", on_mouse_move)
 release_id = fig.canvas.mpl_connect("button_release_event", on_mouse_release)
 
-# Looks like I can't mix matplotlib and pyo GUI
-# s.gui(locals())
 
 fig.show()
-(trail,) = note_ax.plot(freq_history)
 note1_dot = note_ax.scatter([len(freq_history)], [note1.get_fund_freq()])
 note2_dot = note_ax.scatter([len(freq_history)], [note2.get_fund_freq()])
-(bar,) = dist_ax.bar(x=[0], height=dissonance(note1, note2))
+(trail,) = note_ax.plot(freq_history.to_list())
+(bar,) = dist_ax.bar(x=[0], height=note1.calc_tone_dissonance(note2))
 
 frame_count = 1
 while listener.is_alive():
     start = time.time()
-    history_index = frame_count % len(freq_history)
-    freq_history[history_index] = note1.get_fund_freq()
 
-    if history_index == len(freq_history) - 1:
-        trail.set_ydata(freq_history)
-    else:
-        trail.set_ydata(
-            freq_history[history_index + 1 :] + freq_history[: history_index + 1]
-        )
+    # TODO: simplify this with circular array
+    # history_index = frame_count % len(freq_history)
+    # freq_history[history_index] = note1.get_fund_freq()
+    freq_history.set_curr_value(note1.get_fund_freq())
+    freq_history.advance()
+    trail.set_ydata(freq_history.to_list())
+    # if history_index == len(freq_history) - 1:
+    #     trail.set_ydata(freq_history)
+    # else:
+    #     trail.set_ydata(
+    #         freq_history[history_index + 1 :] + freq_history[: history_index + 1]
+    #     )
 
     note1_dot.set_offsets([(note_x, note1.get_fund_freq())])
     dissonance = note1.calc_tone_dissonance(note2)
