@@ -4,9 +4,8 @@
 
 ## Ideas for Next Steps
 * Add a smooth slider for note1 that can recreate the peaks in the dissonance I say on music Stack Exchange
-* clean up comments
 * Add a trail for note2
-* Make the yaxis limits adapt to maximum values as they come 
+* Set y-axis ticks to show octaves
 
 ## Bigger Ideas
 * Make a GUI with slider that controls sine waves
@@ -21,6 +20,8 @@
    * It should have get_next_index() and to_list() functions
 
 ### Completed
+* Convert tone_graph to using matplotlib animation API
+* Make the yaxis limits adapt to maximum values as they come 
 * make the dissonance look more like the moving note values instead of the bar graph
 * Create a circular list for holding running histories
 * Modify the dissonance calculation to take into account all the overtones of the tones

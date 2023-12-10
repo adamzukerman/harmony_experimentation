@@ -1,6 +1,8 @@
 import pyo
 from tone import Tone
 import pynput.keyboard as kb
+import matplotlib
+from matplotlib import animation
 import matplotlib.pyplot as plt
 import time
 import math
@@ -15,6 +17,7 @@ PITCH_MAX = 4_000
 A = 440
 STARTING_FREQ_1 = 440
 STARTING_FREQ_2 = 220
+dist_max = 0.1
 NOTES = [A * pow(2, i * 1 / 12) for i in range(40)] + [
     A * pow(2, i * -1 / 12) for i in range(1, 40)
 ]  # notes to snap to
@@ -26,17 +29,7 @@ freq_history.set_all_values(value=0)
 dissonance_history = CircularList(TRAIL_TIME * FRAME_RATE)
 dissonance_history.set_all_values(value=0)
 
-# Setting up graph properties
-plt.ion()
-fig, (note_ax, dist_ax) = plt.subplots(2, 1)
-note_ax.set_xlim(0, 2 * len(freq_history))  # have the note in middle of graph
-note_ax.set_yscale("log")
-note_ax.set_ylim(50, PITCH_MAX)
-dist_ax.set_xlim(0, 2 * len(freq_history))  # have the note in middle of graph
-dist_max = 0.1
-dist_ax.set_ylim(0, dist_max)  # used for dissonance equation
-note_x = len(freq_history)
-
+    
 # Setting up pyo objects
 s = pyo.Server().boot()
 s.start()
@@ -107,20 +100,33 @@ def on_mouse_move(event):
 
 listener = kb.Listener(on_press=on_press)
 listener.start()
-press_id = fig.canvas.mpl_connect("button_press_event", on_mouse_press)
-move_id = fig.canvas.mpl_connect("motion_notify_event", on_mouse_move)
-release_id = fig.canvas.mpl_connect("button_release_event", on_mouse_release)
 
-
-fig.show()
+fig, (note_ax, dist_ax) = plt.subplots(2, 1)
+note_x = len(freq_history)
 note1_dot = note_ax.scatter([len(freq_history)], [note1.get_fund_freq()])
 note2_dot = note_ax.scatter([len(freq_history)], [note2.get_fund_freq()])
 (trail,) = note_ax.plot(freq_history.to_list())
 dissonance_dot = dist_ax.scatter(x=[0], y=[note1.calc_tone_dissonance(note2)])
 (dissonance_trail,) = dist_ax.plot(dissonance_history.to_list())
+press_id = fig.canvas.mpl_connect("button_press_event", on_mouse_press)
+move_id = fig.canvas.mpl_connect("motion_notify_event", on_mouse_move)
+release_id = fig.canvas.mpl_connect("button_release_event", on_mouse_release)
 
-frame_count = 1
-while listener.is_alive():
+def setup():
+    # Setting up graph properties
+    matplotlib.use("MacOSX")
+    # plt.ion()
+
+    note_ax.set_xlim(0, 2 * len(freq_history))  # have the note in middle of graph
+    note_ax.set_yscale("log")
+    note_ax.set_ylim(50, PITCH_MAX)
+    
+    dist_ax.set_xlim(0, 2 * len(freq_history))  # have the note in middle of graph
+    dist_ax.set_ylim(0, dist_max)  # used for dissonance equation
+
+    # fig.show()
+
+def update(frame):
     start = time.time()
     
     # update the values
@@ -134,26 +140,27 @@ while listener.is_alive():
     note2_dot.set_offsets([(note_x, curr_fund_freq_2)])
     dissonance_dot.set_offsets([(note_x, curr_dissonance)])
     dissonance_trail.set_ydata(dissonance_history.to_list())
+    global dist_max
     if curr_dissonance > dist_max:
         dist_max = 1.1 * curr_dissonance
         dist_ax.set_ylim((0, dist_max))
         print("resetting dissonance range")
 
-    # get old values and update histoiries
-    prev_fund_freq_1 = curr_fund_freq_1
-    prev_fund_freq_2 = curr_fund_freq_2
-    prev_dissonance = curr_dissonance
-    freq_history.set_curr_value(prev_fund_freq_1)
+    # update histoiries
+    freq_history.set_curr_value(curr_fund_freq_1)
     freq_history.advance() # advance so it points to the oldest value for plotting
-    dissonance_history.set_curr_value(prev_dissonance)
-    dissonance_history.advance()
     # TODO: Add a history for note 2
+    dissonance_history.set_curr_value(curr_dissonance)
+    dissonance_history.advance()
     
     fig.canvas.flush_events()
 
-    frame_count += 1
     end = time.time()
     extra_frame_time = max(0, frame_length - (end - start))
     time.sleep(
         max(0, extra_frame_time)
     )  # Try to make evey frame a standard amount of time.
+    pass
+
+ani = animation.FuncAnimation(fig=fig, func=update, init_func=setup, interval=1_000*1/FRAME_RATE)
+plt.show()
