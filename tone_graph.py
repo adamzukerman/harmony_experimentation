@@ -9,8 +9,8 @@ from circular_list import CircularList
 # Setting up file-wide constants
 MOUSE_PRESSED = False
 FRAME_RATE = 30
-TRAIL_TIME = 2  # number of seconds to show of pitch history
-PITCH_MAX = 4000
+TRAIL_TIME = 5  # number of seconds to show of pitch history
+PITCH_MAX = 4_000
 A = 440
 STARTING_FREQ_1 = 440
 STARTING_FREQ_2 = 220
@@ -21,24 +21,23 @@ notes = [A * pow(2, i * 1 / 12) for i in range(40)] + [
 
 frame_length = 1 / FRAME_RATE
 freq_history = CircularList(TRAIL_TIME * FRAME_RATE)
-freq_history.set_all_values(0)
-# freq_history = [0] * (TRAIL_TIME * FRAME_RATE)
+freq_history.set_all_values(value=0)
+dissonance_history = CircularList(TRAIL_TIME * FRAME_RATE)
+dissonance_history.set_all_values(value=0)
 
 # Setting up graph properties
 plt.ion()
-fig, (note_ax, dist_ax) = plt.subplots(1, 2)
+fig, (note_ax, dist_ax) = plt.subplots(2, 1)
 note_ax.set_xlim(0, 2 * len(freq_history))  # have the note in middle of graph
 note_ax.set_yscale("log")
 note_ax.set_ylim(50, PITCH_MAX)
-dist_ax.set_xlim(-1, 1)
-dist_ax.set_ylim(0, 0.1)  # used for dissonance equation
+dist_ax.set_xlim(0, 2 * len(freq_history))  # have the note in middle of graph
+dist_ax.set_ylim(0, 0.3)  # used for dissonance equation
 note_x = len(freq_history)
 
 # Setting up pyo objects
 s = pyo.Server().boot()
 s.start()
-# note1 = pyo.Sine(freq=STARTING_FREQ_1, mul=0.4).out()
-# note2 = pyo.Sine(freq=STARTING_FREQ_2, mul=note1.get_mul()).out()
 note1 = Tone(fund_freq=440, mul=0.4)
 note1.set_random_overtones(15)
 print("nummber of overtones for note1: ", len(note1._get_sines().items()))
@@ -55,16 +54,12 @@ def on_press(key):
         print("Terminating")
         return False
     elif key == kb.KeyCode.from_char("u"):
-        # note1.get_fund_freq() *= pow(2, 1 / 12)
         note1.set_fund_freq(note1.get_fund_freq() * pow(2, 1 / 12))
     elif key == kb.KeyCode.from_char("U"):
-        # note1.get_fund_freq() *= pow(2, -1 / 12)
         note1.set_fund_freq(note1.get_fund_freq() * pow(2, -1 / 12))
     elif key == kb.KeyCode.from_char("i"):
-        # note2.get_fund_freq() *= pow(2, 1 / 12)
         note2.set_fund_freq(note2.get_fund_freq() * pow(2, 1 / 12))
     elif key == kb.KeyCode.from_char("I"):
-        # note2.get_fund_freq() *= pow(2, -1 / 12)
         note2.set_fund_freq(note2.get_fund_freq() * pow(2, -1 / 12))
     elif key == kb.Key.shift:
         pass
@@ -115,28 +110,35 @@ fig.show()
 note1_dot = note_ax.scatter([len(freq_history)], [note1.get_fund_freq()])
 note2_dot = note_ax.scatter([len(freq_history)], [note2.get_fund_freq()])
 (trail,) = note_ax.plot(freq_history.to_list())
-(bar,) = dist_ax.bar(x=[0], height=note1.calc_tone_dissonance(note2))
+dissonance_dot = dist_ax.scatter(x=[0], y=[note1.calc_tone_dissonance(note2)])
+(dissonance_trail,) = dist_ax.plot(dissonance_history.to_list())
 
 frame_count = 1
 while listener.is_alive():
     start = time.time()
+    
+    # update the values
+    curr_fund_freq_1 = note1.get_fund_freq()
+    curr_fund_freq_2 = note2.get_fund_freq()
+    curr_dissonance = note1.calc_tone_dissonance(note2)
 
-    # TODO: simplify this with circular array
-    # history_index = frame_count % len(freq_history)
-    # freq_history[history_index] = note1.get_fund_freq()
-    freq_history.set_curr_value(note1.get_fund_freq())
-    freq_history.advance()
+    # Udate graphs
     trail.set_ydata(freq_history.to_list())
-    # if history_index == len(freq_history) - 1:
-    #     trail.set_ydata(freq_history)
-    # else:
-    #     trail.set_ydata(
-    #         freq_history[history_index + 1 :] + freq_history[: history_index + 1]
-    #     )
+    note1_dot.set_offsets([(note_x, curr_fund_freq_1)])
+    note2_dot.set_offsets([(note_x, curr_fund_freq_2)])
+    dissonance_dot.set_offsets([(note_x, curr_dissonance)])
+    dissonance_trail.set_ydata(dissonance_history.to_list())
 
-    note1_dot.set_offsets([(note_x, note1.get_fund_freq())])
-    dissonance = note1.calc_tone_dissonance(note2)
-    bar.set_height(dissonance)
+    # get old values and update histoiries
+    prev_fund_freq_1 = curr_fund_freq_1
+    prev_fund_freq_2 = curr_fund_freq_2
+    prev_dissonance = curr_dissonance
+    freq_history.set_curr_value(prev_fund_freq_1)
+    freq_history.advance() # advance so it points to the oldest value for plotting
+    dissonance_history.set_curr_value(prev_dissonance)
+    dissonance_history.advance()
+    # TODO: Add a history for note 2
+    
     fig.canvas.flush_events()
 
     frame_count += 1
