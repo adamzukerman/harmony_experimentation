@@ -33,7 +33,8 @@ note_ax.set_xlim(0, 2 * len(freq_history))  # have the note in middle of graph
 note_ax.set_yscale("log")
 note_ax.set_ylim(50, PITCH_MAX)
 dist_ax.set_xlim(0, 2 * len(freq_history))  # have the note in middle of graph
-dist_ax.set_ylim(0, 0.3)  # used for dissonance equation
+dist_max = 0.1
+dist_ax.set_ylim(0, dist_max)  # used for dissonance equation
 note_x = len(freq_history)
 
 # Setting up pyo objects
@@ -133,6 +134,10 @@ while listener.is_alive():
     note2_dot.set_offsets([(note_x, curr_fund_freq_2)])
     dissonance_dot.set_offsets([(note_x, curr_dissonance)])
     dissonance_trail.set_ydata(dissonance_history.to_list())
+    if curr_dissonance > dist_max:
+        dist_max = 1.1 * curr_dissonance
+        dist_ax.set_ylim((0, dist_max))
+        print("resetting dissonance range")
 
     # get old values and update histoiries
     prev_fund_freq_1 = curr_fund_freq_1
