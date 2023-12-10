@@ -110,11 +110,4 @@ class Tone:
         dist = abs(note1.freq - note2.freq)
         Z = pow(math.e, -1 * b1 * s * dist) - pow(math.e, -1 * b2 * s * dist)
         R = pow(X, 0.1) * 0.5 * pow(Y, 3.11) * Z
-        # if R != 0:
-        #     print("R:", R)
-        # if R == 0 and note1.freq != note2.freq:
-        #     print("Dissonance should not be 0!")
-        # elif R == 0:
-        #     # print("R should be 0o??")
-        #     pass
         return R
