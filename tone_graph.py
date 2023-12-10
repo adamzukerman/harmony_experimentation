@@ -7,6 +7,7 @@ import math
 from circular_list import CircularList
 
 # Setting up file-wide constants
+# TODO Move this to a parameters file?
 MOUSE_PRESSED = False
 FRAME_RATE = 30
 TRAIL_TIME = 5  # number of seconds to show of pitch history
@@ -14,11 +15,11 @@ PITCH_MAX = 4_000
 A = 440
 STARTING_FREQ_1 = 440
 STARTING_FREQ_2 = 220
-notes = [A * pow(2, i * 1 / 12) for i in range(40)] + [
+NOTES = [A * pow(2, i * 1 / 12) for i in range(40)] + [
     A * pow(2, i * -1 / 12) for i in range(1, 40)
-]  # notes to snap to?
+]  # notes to snap to
 
-
+# Directly derived from constants
 frame_length = 1 / FRAME_RATE
 freq_history = CircularList(TRAIL_TIME * FRAME_RATE)
 freq_history.set_all_values(value=0)
@@ -61,6 +62,10 @@ def on_press(key):
         note2.set_fund_freq(note2.get_fund_freq() * pow(2, 1 / 12))
     elif key == kb.KeyCode.from_char("I"):
         note2.set_fund_freq(note2.get_fund_freq() * pow(2, -1 / 12))
+    elif key == kb.KeyCode.from_char("o"):
+        print("Resetting overtones randomly")
+        note1.set_random_overtones(15)
+        note2.set_random_overtones(15)
     elif key == kb.Key.shift:
         pass
     elif key == kb.KeyCode.from_char("r"):
