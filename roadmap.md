@@ -3,9 +3,8 @@
 ## Steps to Making a Harmony Stabilization Application
 
 ## Ideas for Next Steps
-* Add a smooth slider for note1 that can recreate the peaks in the dissonance I say on music Stack Exchange
 * Add a trail for note2
-* Set y-axis ticks to show octaves
+* Add option to set y-axis ticks to only show octaves
 
 ## Bigger Ideas
 * Make a GUI with slider that controls sine waves
@@ -20,6 +19,8 @@
    * It should have get_next_index() and to_list() functions
 
 ### Completed
+* Add a smooth slider for note1 that can recreate the peaks in the dissonance I say on music Stack Exchange
+* Fix range modification so that setting ticks does not impact the range of the y axis. Only set ticks within given range
 * Convert tone_graph to using matplotlib animation API
 * Make the yaxis limits adapt to maximum values as they come 
 * make the dissonance look more like the moving note values instead of the bar graph

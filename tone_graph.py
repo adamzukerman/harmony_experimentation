@@ -1,26 +1,28 @@
 import pyo
 from tone import Tone
+from circular_list import CircularList
 import pynput.keyboard as kb
 import matplotlib
 from matplotlib import animation
+from matplotlib.widgets import Slider
 import matplotlib.pyplot as plt
 import time
 import math
-from circular_list import CircularList
+import numpy as np
 
 # Setting up file-wide constants
 # TODO Move this to a parameters file?
 MOUSE_PRESSED = False
-FRAME_RATE = 30
+FRAME_RATE = 60
 TRAIL_TIME = 5  # number of seconds to show of pitch history
-PITCH_MAX = 4_000
+FREQ_MAX = 4_000
+FREQ_MIN = 30
 A = 440
 STARTING_FREQ_1 = 440
 STARTING_FREQ_2 = 220
 dist_max = 0.1
-NOTES = [A * pow(2, i * 1 / 12) for i in range(40)] + [
-    A * pow(2, i * -1 / 12) for i in range(1, 40)
-]  # notes to snap to
+NOTES_RANGE = 40
+NOTE_NAMES = ['A', 'A#/Bb', 'B', 'C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab']
 
 # Directly derived from constants
 frame_length = 1 / FRAME_RATE
@@ -28,14 +30,26 @@ freq_history = CircularList(TRAIL_TIME * FRAME_RATE)
 freq_history.set_all_values(value=0)
 dissonance_history = CircularList(TRAIL_TIME * FRAME_RATE)
 dissonance_history.set_all_values(value=0)
+note_freqs = [A * pow(2, i * 1 / 12) for i in range(NOTES_RANGE)] 
+note_freqs = [A * pow(2, i * -1 / 12) for i in range(1, NOTES_RANGE)][::-1] + note_freqs
+note_labels = [NOTE_NAMES[indx % 12] for indx in range(NOTES_RANGE)]
+note_labels = [NOTE_NAMES[(-1*indx) % 12] for indx in range(1, NOTES_RANGE)][::-1] + note_labels
 
     
 # Setting up pyo objects
-s = pyo.Server().boot()
+# output_device_name = "Adam’s AirPods Pro" # Requires weird single quote with opt+shift+]
+output_device_name = pyo.pa_get_output_devices()[0][0] # This is probably the better solution that connects to most headphones
+s = pyo.Server()
+device_names, device_indexes = pyo.pa_get_output_devices()
+my_dev_index = device_names.index(output_device_name)
+pyo_output_location = device_indexes[my_dev_index]
+s.setOutputDevice(pyo_output_location)
+s.boot()
 s.start()
 note1 = Tone(fund_freq=440, mul=0.4)
 note1.set_random_overtones(15)
 print("nummber of overtones for note1: ", len(note1._get_sines().items()))
+freq_history.set_all_values(note1.get_fund_freq())
 note1.out()
 note2 = Tone(fund_freq=220, mul=0.4)
 note2.set_random_overtones(15)
@@ -47,6 +61,7 @@ def on_press(key):
         global s
         s.stop()
         print("Terminating")
+        plt.close("all")
         return False
     elif key == kb.KeyCode.from_char("u"):
         note1.set_fund_freq(note1.get_fund_freq() * pow(2, 1 / 12))
@@ -60,6 +75,8 @@ def on_press(key):
         print("Resetting overtones randomly")
         note1.set_random_overtones(15)
         note2.set_random_overtones(15)
+    elif key == kb.KeyCode.from_char("a"):
+        note_ax.set_yticklabels([])
     elif key == kb.Key.shift:
         pass
     elif key == kb.KeyCode.from_char("r"):
@@ -78,7 +95,7 @@ def on_press(key):
 
 
 def on_mouse_press(event):
-    if not event.ydata:
+    if not event.ydata or not note_ax == event.inaxes:
         return None
     y_pos = float(event.ydata)  # pyo can't handle numpy dtypes
     note1.set_fund_freq(float(y_pos))
@@ -101,7 +118,29 @@ def on_mouse_move(event):
 listener = kb.Listener(on_press=on_press)
 listener.start()
 
-fig, (note_ax, dist_ax) = plt.subplots(2, 1)
+# Initial setup of axes and gridspec
+matplotlib.use("MacOSX")
+fig = plt.figure()
+fig.set_size_inches(w=10, h=9)
+widths = [1, 30]
+heights = [1, 1]
+n_rows, n_cols = 2, 2
+spec = fig.add_gridspec(nrows=2, ncols=2, width_ratios=widths, height_ratios=heights)
+slider_ax = fig.add_subplot(spec[0, 0])
+note_ax = fig.add_subplot(spec[0, 1])
+dist_ax = fig.add_subplot(spec[1, 1])
+note_ax.set_xlim(0, 2 * len(freq_history))  # have the note in middle of graph
+note_ax.set_yscale("log")
+# Get rid of default ticks
+note_ax.get_yaxis().set_major_formatter(matplotlib.ticker.NullFormatter())
+note_ax.get_yaxis().set_minor_formatter(matplotlib.ticker.NullFormatter())
+note_ax.get_yaxis().set_minor_locator(matplotlib.ticker.NullLocator())
+note_ax.get_yaxis().set_major_locator(matplotlib.ticker.NullLocator())
+note_ax.set_yticks(note_freqs, note_labels)
+dist_ax.set_xlim(0, 2 * len(freq_history))  # have the note in middle of graph
+dist_ax.set_ylim(0, dist_max)  # used for dissonance equation
+
+slider = Slider(slider_ax, label="range_control", valmin=0, valmax=(math.log10(FREQ_MAX/FREQ_MIN)/2), orientation="vertical", valinit=0.25)
 note_x = len(freq_history)
 note1_dot = note_ax.scatter([len(freq_history)], [note1.get_fund_freq()])
 note2_dot = note_ax.scatter([len(freq_history)], [note2.get_fund_freq()])
@@ -112,19 +151,38 @@ press_id = fig.canvas.mpl_connect("button_press_event", on_mouse_press)
 move_id = fig.canvas.mpl_connect("motion_notify_event", on_mouse_move)
 release_id = fig.canvas.mpl_connect("button_release_event", on_mouse_release)
 
+def slider_update(val):
+    """
+    Zoom out/in from center of (currently 2) notes. 
+    Requires translating out of and into log scale
+    """
+    log_f1 = math.log10(note1.get_fund_freq())
+    log_f2 = math.log10(note2.get_fund_freq())
+    middle = (log_f1 + log_f2)/2
+    log_min = math.log10(FREQ_MIN)
+    log_max = math.log10(FREQ_MAX)
+    new_ymin = pow(10, middle - val)
+    new_ymax = pow(10, middle + val)
+    #Linear search through notes to find which which ticks to set
+    # I'm sure there are possible budgs in this with the loose relationship between the scale and the fixed set of possible ticks
+    min_indx = -1
+    max_indx = -1
+    for indx, freq in enumerate(note_freqs):
+        if min_indx == -1 and freq > new_ymin:
+            min_indx = indx
+        if max_indx == -1 and freq > new_ymax:
+            max_indx = indx - 1
+            break 
+    note_ax.set_ylim(new_ymin, new_ymax) 
+    note_ax.set_yticks(note_freqs[min_indx:max_indx], note_labels[min_indx:max_indx]) # Setting ticks is modifying the limits!
+slider.on_changed(slider_update)
+
+def set_note_ticks():
+    note_ax.set_yticks(note_freqs, note_labels)
+
 def setup():
     # Setting up graph properties
-    matplotlib.use("MacOSX")
-    # plt.ion()
-
-    note_ax.set_xlim(0, 2 * len(freq_history))  # have the note in middle of graph
-    note_ax.set_yscale("log")
-    note_ax.set_ylim(50, PITCH_MAX)
-    
-    dist_ax.set_xlim(0, 2 * len(freq_history))  # have the note in middle of graph
-    dist_ax.set_ylim(0, dist_max)  # used for dissonance equation
-
-    # fig.show()
+    slider_update(slider.val)
 
 def update(frame):
     start = time.time()
@@ -163,4 +221,6 @@ def update(frame):
     pass
 
 ani = animation.FuncAnimation(fig=fig, func=update, init_func=setup, interval=1_000*1/FRAME_RATE)
+fig.show()
 plt.show()
+time.sleep(1)
