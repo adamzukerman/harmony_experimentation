@@ -3,8 +3,13 @@
 ## Steps to Making a Harmony Stabilization Application
 
 ## Ideas for Next Steps
-* Add a trail for note2
-* Add option to set y-axis ticks to only show octaves
+* Flip the axes of the note axis so notes are shifted horizontally
+* Create an axis that shows nearby dissonances if note1 were to slide
+* Add a smooth slider for note1 that can recreate the peaks in the dissonance I say on music Stack Exchange
+* change structure of code to support an arbitrary number of notes
+* Set y-axis ticks to show octaves
+* Find method to optimize dissonance of note1
+  * scipy has a minimize_scalar() that works for functions with only one input. Not idea but could word for now.
 
 ## Bigger Ideas
 * Make a GUI with slider that controls sine waves
@@ -12,14 +17,16 @@
 * Create options to adjust step size of frequency shifting buttons for fine-tuning
 
 ## Code Improvement Ideas
+* Need to find a way to clean up tone_graph.py
+* 
+
+### Completed
+* Add a trail for note2
 * Create a class for notes
    * a note has a set of overtones with various strengths (a timber)
    * a note has its own circular array for its history
 * Create a class for the circular array that's used to store the frequency history
    * It should have get_next_index() and to_list() functions
-
-### Completed
-* Add a smooth slider for note1 that can recreate the peaks in the dissonance I say on music Stack Exchange
 * Fix range modification so that setting ticks does not impact the range of the y axis. Only set ticks within given range
 * Convert tone_graph to using matplotlib animation API
 * Make the yaxis limits adapt to maximum values as they come 
