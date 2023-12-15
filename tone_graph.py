@@ -132,23 +132,25 @@ spec = fig.add_gridspec(nrows=2, ncols=2, width_ratios=widths, height_ratios=hei
 slider_ax = fig.add_subplot(spec[0, 0])
 note_ax = fig.add_subplot(spec[0, 1])
 dist_ax = fig.add_subplot(spec[1, 1])
-note_ax.set_xlim(0, 2 * len(freq_history1))  # have the note in middle of graph
-note_ax.set_yscale("log")
+note_ax.set_ylim(0, 2 * len(freq_history1))  # have the note in middle of graph
+note_ax.set_xscale("log")
 # Get rid of default ticks
-note_ax.get_yaxis().set_major_formatter(matplotlib.ticker.NullFormatter())
-note_ax.get_yaxis().set_minor_formatter(matplotlib.ticker.NullFormatter())
-note_ax.get_yaxis().set_minor_locator(matplotlib.ticker.NullLocator())
-note_ax.get_yaxis().set_major_locator(matplotlib.ticker.NullLocator())
-note_ax.set_yticks(note_freqs, note_labels)
-dist_ax.set_xlim(0, 2 * len(freq_history1))  # have the note in middle of graph
+note_ax.get_xaxis().set_major_formatter(matplotlib.ticker.NullFormatter())
+note_ax.get_xaxis().set_minor_formatter(matplotlib.ticker.NullFormatter())
+note_ax.get_xaxis().set_minor_locator(matplotlib.ticker.NullLocator())
+note_ax.get_xaxis().set_major_locator(matplotlib.ticker.NullLocator())
+note_ax.set_xticks(note_freqs, note_labels)
+dist_ax.set_xlim(0, 1.1 * len(freq_history1))  # have the note in middle of graph
 dist_ax.set_ylim(0, dist_max)  # used for dissonance equation
 
 slider = Slider(slider_ax, label="range_control", valmin=0, valmax=(math.log10(FREQ_MAX/FREQ_MIN)/2), orientation="vertical", valinit=0.25)
-note_x = len(freq_history1)
-note1_dot = note_ax.scatter([len(freq_history1)], [note1.get_fund_freq()])
-note2_dot = note_ax.scatter([len(freq_history2)], [note2.get_fund_freq()])
-(trail1,) = note_ax.plot(freq_history1.to_list())
-(trail2,) = note_ax.plot(freq_history2.to_list())
+note_y = (1/11) * len(freq_history1)
+dissonance_x = len(freq_history1)
+trail_ys = np.linspace(start=note_ax.get_ylim()[1], stop=note_y, num=len(freq_history1)) 
+note1_dot = note_ax.scatter([note1.get_fund_freq()], [note_y])
+note2_dot = note_ax.scatter([note2.get_fund_freq()], [note_y])
+(trail1,) = note_ax.plot(freq_history1.to_list(), trail_ys)
+(trail2,) = note_ax.plot(freq_history2.to_list(), trail_ys)
 dissonance_dot = dist_ax.scatter(x=[0], y=[note1.calc_tone_dissonance(note2)])
 (dissonance_trail1,) = dist_ax.plot(dissonance_history.to_list())
 press_id = fig.canvas.mpl_connect("button_press_event", on_mouse_press)
@@ -165,27 +167,25 @@ def slider_update(val):
     middle = (log_f1 + log_f2)/2
     log_min = math.log10(FREQ_MIN)
     log_max = math.log10(FREQ_MAX)
-    new_ymin = pow(10, middle - val)
-    new_ymax = pow(10, middle + val)
+    new_xmin = pow(10, middle - val)
+    new_xmax = pow(10, middle + val)
     #Linear search through notes to find which which ticks to set
     # I'm sure there are possible budgs in this with the loose relationship between the scale and the fixed set of possible ticks
     min_indx = -1
     max_indx = -1
     for indx, freq in enumerate(note_freqs):
-        if min_indx == -1 and freq > new_ymin:
+        if min_indx == -1 and freq > new_xmin:
             min_indx = indx
-        if max_indx == -1 and freq > new_ymax:
+        if max_indx == -1 and freq > new_xmax:
             max_indx = indx - 1
             break 
-    note_ax.set_ylim(new_ymin, new_ymax) 
-    note_ax.set_yticks(note_freqs[min_indx:max_indx], note_labels[min_indx:max_indx]) # Setting ticks is modifying the limits!
+    note_ax.set_xlim(new_xmin, new_xmax) 
+    note_ax.set_xticks(note_freqs[min_indx:max_indx], note_labels[min_indx:max_indx]) # Setting ticks is modifying the limits!
 slider.on_changed(slider_update)
-
-def set_note_ticks():
-    note_ax.set_yticks(note_freqs, note_labels)
 
 def setup():
     # Setting up graph properties
+    # If I put the actual setupt in here, the window shows up all black
     slider_update(slider.val)
 
 def update(frame):
@@ -197,11 +197,11 @@ def update(frame):
     curr_dissonance = note1.calc_tone_dissonance(note2)
 
     # Udate graphs
-    trail1.set_ydata(freq_history1.to_list())
-    trail2.set_ydata(freq_history2.to_list())
-    note1_dot.set_offsets([(note_x, curr_fund_freq_1)])
-    note2_dot.set_offsets([(note_x, curr_fund_freq_2)])
-    dissonance_dot.set_offsets([(note_x, curr_dissonance)])
+    trail1.set_xdata(freq_history1.to_list())
+    trail2.set_xdata(freq_history2.to_list())
+    note1_dot.set_offsets([(curr_fund_freq_1, note_y)])
+    note2_dot.set_offsets([(curr_fund_freq_2, note_y)])
+    dissonance_dot.set_offsets([(dissonance_x, curr_dissonance)])
     dissonance_trail1.set_ydata(dissonance_history.to_list())
     global dist_max
     if curr_dissonance > dist_max:
