@@ -1,18 +1,19 @@
-import pyo
-from tone import Tone
-from circular_list import CircularList
-import pynput.keyboard as kb
+import time
+import math
+import numpy as np
 import matplotlib
 from matplotlib import animation
 from matplotlib.widgets import Slider
 import matplotlib.pyplot as plt
-import time
-import math
-import numpy as np
+import pynput.keyboard as kb
+import pyo
+from tone import Tone
+from circular_list import CircularList
 
 # Setting up file-wide constants
 # TODO Move this to a parameters file?
 MOUSE_PRESSED = False
+PIANO_MODE = False
 FRAME_RATE = 60
 TRAIL_TIME = 5  # number of seconds to show of pitch history
 FREQ_MAX = 4_000
@@ -36,7 +37,25 @@ note_freqs = [A * pow(2, i * 1 / 12) for i in range(NOTES_RANGE)]
 note_freqs = [A * pow(2, i * -1 / 12) for i in range(1, NOTES_RANGE)][::-1] + note_freqs
 note_labels = [NOTE_NAMES[indx % 12] for indx in range(NOTES_RANGE)]
 note_labels = [NOTE_NAMES[(-1*indx) % 12] for indx in range(1, NOTES_RANGE)][::-1] + note_labels
+a4_indx = note_freqs.index(A)
 
+note_freq_dict = {}
+octave = 4
+# notes going up from A4
+for i, (note_name, note_freq) in enumerate(zip(note_labels[a4_indx:], note_freqs[a4_indx:])):
+    key = note_name + str(octave)
+    if note_freq_dict.get(key):
+        octave += 1
+        key = note_name + str(octave)
+    note_freq_dict[key] = note_freq
+octave = 4
+# notes going down from A4
+for i, (note_name, note_freq) in enumerate(zip(note_labels[:a4_indx+1][::-1], note_freqs[:a4_indx+1][::-1])):
+    key = note_name + str(octave)
+    if note_freq_dict.get(key):
+        octave -= 1
+        key = note_name + str(octave)
+    note_freq_dict[key] = note_freq
     
 # Setting up pyo objects
 # output_device_name = "Adam’s AirPods Pro" # Requires weird single quote with opt+shift+]
@@ -60,7 +79,13 @@ freq_history2.set_all_values(note2.get_fund_freq())
 
 
 def on_press(key):
-    if key == kb.KeyCode.from_char("q"):
+    global PIANO_MODE
+    if PIANO_MODE:
+        return piano_input(key)
+    if key == kb.KeyCode.from_char("1") and not PIANO_MODE:
+        print("entering piano mode")
+        PIANO_MODE = True
+    elif key == kb.KeyCode.from_char("q"):
         global s
         s.stop()
         print("Terminating")
@@ -95,6 +120,39 @@ def on_press(key):
         note2.set_fund_freq(closest_note2)
     else:
         print("key behavior undefined")
+
+def piano_input(key):
+    # CONFLICTING KEYBINDINGS WITH MATPLOTLIB
+    #s: save, f: full screen
+    global PIANO_MODE
+    if key == kb.KeyCode.from_char("1"):
+        print("turning off piano mode")
+        PIANO_MODE = False
+    elif key == kb.Key.space:
+        note1.set_fund_freq(note_freq_dict["C4"])
+    elif key == kb.KeyCode.from_char("u"):
+        note1.set_fund_freq(note_freq_dict["C#/Db4"])
+    elif key == kb.KeyCode.from_char("j"):
+        note1.set_fund_freq(note_freq_dict["D4"])
+    elif key == kb.KeyCode.from_char("i"):
+        note1.set_fund_freq(note_freq_dict["D#/Eb4"])
+    elif key == kb.KeyCode.from_char("k"):
+        note1.set_fund_freq(note_freq_dict["E4"])
+    elif key == kb.KeyCode.from_char("l"):
+        note1.set_fund_freq(note_freq_dict["F4"])
+    elif key == kb.KeyCode.from_char("p"):
+        note1.set_fund_freq(note_freq_dict["F#/Gb4"])
+    # Going down from C
+    elif key == kb.KeyCode.from_char("f"):
+        note1.set_fund_freq(note_freq_dict["B4"])
+    elif key == kb.KeyCode.from_char("r"):
+        note1.set_fund_freq(note_freq_dict["A#/Bb4"])
+    elif key == kb.KeyCode.from_char("d"):
+        note1.set_fund_freq(note_freq_dict["A3"])
+    elif key == kb.KeyCode.from_char("e"):
+        note1.set_fund_freq(note_freq_dict["G#/Ab3"])
+    elif key == kb.KeyCode.from_char("s"):
+        note1.set_fund_freq(note_freq_dict["G3"])
 
 
 def on_mouse_press(event):
