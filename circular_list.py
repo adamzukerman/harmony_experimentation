@@ -1,12 +1,16 @@
 class CircularList:
     """This class was made for easier access to moving historical values"""
 
-    def __init__(self, size: int):
+    def __init__(self, size: int, init_value=None):
         """
         Initializes a circular array
         """
         self.list = [None] * size
         self._index = 0
+        self.set_all_values(init_value)
+
+    def get_curr_value(self):
+        return self.list[self._index]
 
     def get_index(self):
         return self._index
