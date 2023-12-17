@@ -27,12 +27,9 @@ NOTE_NAMES = ['A', 'A#/Bb', 'B', 'C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 
 
 # Directly derived from constants
 frame_length = 1 / FRAME_RATE
-freq_history1 = CircularList(TRAIL_TIME * FRAME_RATE)
-freq_history1.set_all_values(value=0)
-freq_history2 = CircularList(TRAIL_TIME * FRAME_RATE)
-freq_history2.set_all_values(value=0)
-dissonance_history = CircularList(TRAIL_TIME * FRAME_RATE)
-dissonance_history.set_all_values(value=0)
+freq_history1 = CircularList(TRAIL_TIME * FRAME_RATE, init_value=0)
+freq_history2 = CircularList(TRAIL_TIME * FRAME_RATE, init_value=0)
+dissonance_history = CircularList(TRAIL_TIME * FRAME_RATE, init_value=0)
 note_freqs = [A * pow(2, i * 1 / 12) for i in range(NOTES_RANGE)] 
 note_freqs = [A * pow(2, i * -1 / 12) for i in range(1, NOTES_RANGE)][::-1] + note_freqs
 note_labels = [NOTE_NAMES[indx % 12] for indx in range(NOTES_RANGE)]
@@ -79,80 +76,79 @@ freq_history2.set_all_values(note2.get_fund_freq())
 
 
 def on_press(key):
+    # More conflicting keybindings with matplotlib
     global PIANO_MODE
-    if PIANO_MODE:
-        return piano_input(key)
-    if key == kb.KeyCode.from_char("1") and not PIANO_MODE:
+
+    def enter_piano_mode():
         print("entering piano mode")
+        global PIANO_MODE
         PIANO_MODE = True
-    elif key == kb.KeyCode.from_char("q"):
+
+    def stop_program():
         global s
         s.stop()
         print("Terminating")
         plt.close("all")
         return False
-    elif key == kb.KeyCode.from_char("u"):
-        note1.set_fund_freq(note1.get_fund_freq() * pow(2, 1 / 12))
-    elif key == kb.KeyCode.from_char("U"):
-        note1.set_fund_freq(note1.get_fund_freq() * pow(2, -1 / 12))
-    elif key == kb.KeyCode.from_char("i"):
-        note2.set_fund_freq(note2.get_fund_freq() * pow(2, 1 / 12))
-    elif key == kb.KeyCode.from_char("I"):
-        note2.set_fund_freq(note2.get_fund_freq() * pow(2, -1 / 12))
-    elif key == kb.KeyCode.from_char("o"):
+
+    def adjust_note_frequency(note, exponent):
+        note.set_fund_freq(note.get_fund_freq() * pow(2, exponent))
+
+    def reset_overtones():
         print("Resetting overtones randomly")
         note1.set_random_overtones(15)
         note2.set_random_overtones(15)
-    elif key == kb.KeyCode.from_char("a"):
-        note_ax.set_yticklabels([])
-    elif key == kb.Key.shift:
-        pass
-    elif key == kb.KeyCode.from_char("r"):
-        note1.set_fund_freq(STARTING_FREQ_1)
-        note2.set_fund_freq(STARTING_FREQ_2)
-    elif key == kb.KeyCode.from_char("R"):
-        return 1  # ignoring this section until bug is fixed. Reprioritizing
-        closest_note1 = min(
-            [abs(note1.get_fund_freq() - pitch) for pitch in notes]
-        )  # BUG fix this
-        closest_note2 = min([abs(note2.get_fund_freq() - pitch) for pitch in notes])
-        note1.set_fund_freq(closest_note1)
-        note2.set_fund_freq(closest_note2)
-    else:
-        print("key behavior undefined")
 
-def piano_input(key):
-    # CONFLICTING KEYBINDINGS WITH MATPLOTLIB
-    #s: save, f: full screen
-    global PIANO_MODE
-    if key == kb.KeyCode.from_char("1"):
+    def hide_yticklabels():
+        note_ax.set_yticklabels([])
+    
+    def turn_off_piano_mode():
         print("turning off piano mode")
         PIANO_MODE = False
-    elif key == kb.Key.space:
-        note1.set_fund_freq(note_freq_dict["C4"])
-    elif key == kb.KeyCode.from_char("u"):
-        note1.set_fund_freq(note_freq_dict["C#/Db4"])
-    elif key == kb.KeyCode.from_char("j"):
-        note1.set_fund_freq(note_freq_dict["D4"])
-    elif key == kb.KeyCode.from_char("i"):
-        note1.set_fund_freq(note_freq_dict["D#/Eb4"])
-    elif key == kb.KeyCode.from_char("k"):
-        note1.set_fund_freq(note_freq_dict["E4"])
-    elif key == kb.KeyCode.from_char("l"):
-        note1.set_fund_freq(note_freq_dict["F4"])
-    elif key == kb.KeyCode.from_char("p"):
-        note1.set_fund_freq(note_freq_dict["F#/Gb4"])
-    # Going down from C
-    elif key == kb.KeyCode.from_char("f"):
-        note1.set_fund_freq(note_freq_dict["B4"])
-    elif key == kb.KeyCode.from_char("r"):
-        note1.set_fund_freq(note_freq_dict["A#/Bb4"])
-    elif key == kb.KeyCode.from_char("d"):
-        note1.set_fund_freq(note_freq_dict["A3"])
-    elif key == kb.KeyCode.from_char("e"):
-        note1.set_fund_freq(note_freq_dict["G#/Ab3"])
-    elif key == kb.KeyCode.from_char("s"):
-        note1.set_fund_freq(note_freq_dict["G3"])
+
+    def set_note_frequency(note, note_name):
+        note_freq = note_freq_dict.get(note_name)
+        if note_freq:
+            note.set_fund_freq(note_freq)
+
+    normal_mode_key_actions = {
+        kb.KeyCode.from_char("1"): enter_piano_mode if not PIANO_MODE else None,
+        kb.KeyCode.from_char("q"): stop_program,
+        kb.KeyCode.from_char("u"): lambda: adjust_note_frequency(note1, 1 / 12),
+        kb.KeyCode.from_char("U"): lambda: adjust_note_frequency(note1, -1 / 12),
+        kb.KeyCode.from_char("i"): lambda: adjust_note_frequency(note2, 1 / 12),
+        kb.KeyCode.from_char("I"): lambda: adjust_note_frequency(note2, -1 / 12),
+        kb.KeyCode.from_char("o"): reset_overtones,
+        kb.KeyCode.from_char("a"): hide_yticklabels,
+        kb.Key.shift: lambda: None,
+        kb.KeyCode.from_char("r"): lambda: note1.set_fund_freq(STARTING_FREQ_1) and note2.set_fund_freq(STARTING_FREQ_2),
+        kb.KeyCode.from_char("R"): lambda: None,  # Ignoring this section until bug is fixed. Reprioritizing
+    }
+    piano_mode_key_actions = {
+        kb.KeyCode.from_char("1"): turn_off_piano_mode,
+        kb.Key.space: lambda: set_note_frequency(note1, "C4"),
+        kb.KeyCode.from_char("u"): lambda: set_note_frequency(note1, "C#/Db4"),
+        kb.KeyCode.from_char("j"): lambda: set_note_frequency(note1, "D4"),
+        kb.KeyCode.from_char("i"): lambda: set_note_frequency(note1, "D#/Eb4"),
+        kb.KeyCode.from_char("k"): lambda: set_note_frequency(note1, "E4"),
+        kb.KeyCode.from_char("l"): lambda: set_note_frequency(note1, "F4"),
+        kb.KeyCode.from_char("p"): lambda: set_note_frequency(note1, "F#/Gb4"),
+        kb.KeyCode.from_char("f"): lambda: set_note_frequency(note1, "B4"),
+        kb.KeyCode.from_char("r"): lambda: set_note_frequency(note1, "A#/Bb4"),
+        kb.KeyCode.from_char("d"): lambda: set_note_frequency(note1, "A3"),
+        kb.KeyCode.from_char("e"): lambda: set_note_frequency(note1, "G#/Ab3"),
+        kb.KeyCode.from_char("s"): lambda: set_note_frequency(note1, "G3"), 
+    }
+    
+    if PIANO_MODE:
+        action = piano_mode_key_actions.get(key)
+    else: 
+        action = normal_mode_key_actions.get(key)
+
+    if action:
+        action()
+    else:
+        print("key behavior undefined")
 
 
 def on_mouse_press(event):
@@ -288,4 +284,3 @@ def update(frame):
 ani = animation.FuncAnimation(fig=fig, func=update, init_func=setup, interval=1_000*1/FRAME_RATE)
 fig.show()
 plt.show()
-time.sleep(1)

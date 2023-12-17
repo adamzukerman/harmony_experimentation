@@ -3,13 +3,15 @@
 ## Steps to Making a Harmony Stabilization Application
 
 ## Ideas for Next Steps
-* Flip the axes of the note axis so notes are shifted horizontally
 * Create an axis that shows nearby dissonances if note1 were to slide
 * Add a smooth slider for note1 that can recreate the peaks in the dissonance I say on music Stack Exchange
 * change structure of code to support an arbitrary number of notes
 * Set y-axis ticks to show octaves
 * Find method to optimize dissonance of note1
   * scipy has a minimize_scalar() that works for functions with only one input. Not idea but could word for now.
+* Create a piano-like input using the keyboard. 
+  * Resolve conflicts with matplotlib keybindings
+* Redo how I set random overtones. It's currently not anything related to real sounds
 
 ## Bigger Ideas
 * Make a GUI with slider that controls sine waves
@@ -18,9 +20,11 @@
 
 ## Code Improvement Ideas
 * Need to find a way to clean up tone_graph.py
-* 
+* stop building the set of notes from the middle out
+* Move keybindings (or all input events) to another file 
 
 ### Completed
+* Flip the axes of the note axis so notes are shifted horizontally
 * Add a trail for note2
 * Create a class for notes
    * a note has a set of overtones with various strengths (a timber)
