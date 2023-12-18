@@ -7,8 +7,9 @@ MOUSE_PRESSED = False
 PIANO_MODE = False
 
 
-def on_press(key, active_notes, slctd_note_indx):
+def on_press(key, active_notes, slctd_note_indx, globals):
     # TODO: change body to use slctd_note_indx
+    # TODO: search for and remove all keybindings that conflict with matplotlib
     # More conflicting keybindings with matplotlib
     note1 = active_notes[0]
     note2 = active_notes[1]
@@ -20,8 +21,9 @@ def on_press(key, active_notes, slctd_note_indx):
         PIANO_MODE = True
 
     def stop_program():
-        global s
-        s.stop()
+        server = globals.get("server")
+        if server:
+            server.stop()
         print("Terminating")
         plt.close("all")
         return False

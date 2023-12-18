@@ -5,23 +5,29 @@
 ## Where I Left Off
 * moving all input handling to input.py
 * Next is to move the mouse-related input functions. Also still have to test
-* Find a way to handle the global variables about MOUSE_PRESSED and PIANO_MODE
 
 ## Ideas for Next Steps
+* Factor out the matplotlib code into a separate file
 * Create an axis that shows nearby dissonances if note1 were to slide
 * Add a smooth slider for note1 that can recreate the peaks in the dissonance I say on music Stack Exchange
 * change structure of code to support an arbitrary number of notes
-* Set y-axis ticks to show octaves
+* Set x-axis ticks to show octaves
 * Find method to optimize dissonance of note1
   * scipy has a minimize_scalar() that works for functions with only one input. Not idea but could word for now.
 * Create a piano-like input using the keyboard. 
-  * Resolve conflicts with matplotlib keybindings
+  * TODO: Resolve conflicts with matplotlib keybindings
+  * Also, this feature feels really crappy. It seems hard to make an intuitive mapping from keyboard to piano keys without an additional graphic
 * Redo how I set random overtones. It's currently not anything related to real sounds
 
 ## Bigger Ideas
 * Make a GUI with slider that controls sine waves
 * Create options to add notes
+  * Have a running list of active notes.
+  * Have a method to add and remove active notes
+  * Have a currently selected note.
+    * This note should be made visually more obvious
 * Create options to adjust step size of frequency shifting buttons for fine-tuning
+
 
 ## Code Improvement Ideas
 * Need to find a way to clean up tone_graph.py
@@ -29,6 +35,7 @@
 * Move keybindings (or all input events) to another file 
 
 ### Completed
+* Find a way to handle the global variables about MOUSE_PRESSED and PIANO_MODE
 * Flip the axes of the note axis so notes are shifted horizontally
 * Add a trail for note2
 * Create a class for notes

@@ -14,6 +14,10 @@ class Tone:
         self._sines = []
         self.__generate_sines(self.__fund_freq, self.__overtones)
 
+    def copy(self):
+        """Returns a deep copy of this Tone that not being played"""
+        return Tone(self.__fund_freq, self.__mul, self.__overtones)
+
     def __generate_sines(self, fund_freq, overtones):
         self._sines = {
             overtone: pyo.Sine(freq=self.__fund_freq * overtone, mul=self.__mul * amp)
@@ -45,11 +49,8 @@ class Tone:
             sine.stop()
 
     def set_fund_freq(self, freq: float):
-        # WARNING does not work if __fund_freq is 0
-        # I should just recalculate all the sines
         self._set_sines(freq, self.get_overtones())
         self.__fund_freq = freq
-        ####### FIX ##########
 
     def _set_sines(self, fund_freq, overtones):
         for overtone, amp in overtones.items():
@@ -60,7 +61,7 @@ class Tone:
             else:
                 sine = self._sines[overtone]
                 sine.mul = amp
-                sine.freq = fund_freq * overtone
+                sine.freq = float(fund_freq) * overtone
 
     def set_overtones(self, overtones: dict):
         for overtone, amp in overtones.items():

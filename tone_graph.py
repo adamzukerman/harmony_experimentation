@@ -11,6 +11,7 @@ from tone import Tone
 from circular_list import CircularList
 import inputs
 import notes
+from note_collection import NoteCollection
 
 # Setting up file-wide constants
 # TODO Move this to a parameters file?
@@ -39,43 +40,52 @@ pyo_output_location = device_indexes[my_dev_index]
 s.setOutputDevice(pyo_output_location)
 s.boot()
 s.start()
+note_collection = NoteCollection()
 note1 = Tone(fund_freq=notes.A4, mul=0.4)
 note1.set_random_overtones(15)
-note1.out()
+note_collection.add_note(note1)
 note2 = Tone(fund_freq=notes.A4/2, mul=0.4)
 note2.set_random_overtones(15)
-note2.out()
-active_notes = [note1, note2]
+note_collection.add_note(note2)
+active_notes = note_collection.active_notes
 slctd_note_indx = 0
 freq_history1.set_all_values(note1.get_fund_freq())
 freq_history2.set_all_values(note2.get_fund_freq())
 
 
-listener = kb.Listener(on_press=lambda key: inputs.on_press(key, active_notes, slctd_note_indx))
+listener = kb.Listener(on_press=lambda key: inputs.on_press(key, active_notes, slctd_note_indx, {"server":s}))
 listener.start()
 
 # Initial setup of axes and gridspec
 matplotlib.use("MacOSX")
 fig = plt.figure()
-fig.set_size_inches(w=10, h=9)
+fig.set_size_inches(w=10, h=6)
 widths = [1, 30]
-heights = [1, 1]
+heights = [1, 1, 1]
 n_rows, n_cols = 2, 2
-spec = fig.add_gridspec(nrows=2, ncols=2, width_ratios=widths, height_ratios=heights)
+spec = fig.add_gridspec(nrows=3, ncols=2, width_ratios=widths, height_ratios=heights)
 slider_ax = fig.add_subplot(spec[0, 0])
 note_ax = fig.add_subplot(spec[0, 1])
-dist_ax = fig.add_subplot(spec[1, 1])
+dissonance_sensitivity_ax = fig.add_subplot(spec[1,1:])
+dist_ax = fig.add_subplot(spec[2, 1:])
+# Dissonance history axis settings
 dist_ax.set_xlim(0, 1.1 * len(freq_history1))  # have the note in middle of graph
 dist_ax.set_ylim(0, dist_max)  # used for dissonance equation
-# note_ax.set_ylim(0, 2 * len(freq_history1))  # have the note in middle of graph
+# note_ax (main axis) settings
 note_ax.set_ylim(0, TRAIL_TIME)  # have the note in middle of graph
 note_ax.set_xscale("log")
-# Get rid of default ticks
 note_ax.get_xaxis().set_major_formatter(matplotlib.ticker.NullFormatter())
 note_ax.get_xaxis().set_minor_formatter(matplotlib.ticker.NullFormatter())
 note_ax.get_xaxis().set_minor_locator(matplotlib.ticker.NullLocator())
 note_ax.get_xaxis().set_major_locator(matplotlib.ticker.NullLocator())
 note_ax.set_xticks(notes.note_freqs, notes.note_labels)
+#Dissonance sensitivity axis settings (mostly the same as note_axis)
+dissonance_sensitivity_ax.set_xscale("log")
+dissonance_sensitivity_ax.get_xaxis().set_major_formatter(matplotlib.ticker.NullFormatter())
+dissonance_sensitivity_ax.get_xaxis().set_minor_formatter(matplotlib.ticker.NullFormatter())
+dissonance_sensitivity_ax.get_xaxis().set_minor_locator(matplotlib.ticker.NullLocator())
+dissonance_sensitivity_ax.get_xaxis().set_major_locator(matplotlib.ticker.NullLocator())
+dissonance_sensitivity_ax.set_xticks(notes.note_freqs, notes.note_labels)
 
 slider = Slider(slider_ax, label="range_control", valmin=0, valmax=(math.log10(FREQ_MAX/FREQ_MIN)/2), orientation="vertical", valinit=0.25)
 note_y = 0.03 * note_ax.get_ylim()[1]
@@ -87,6 +97,7 @@ note2_dot = note_ax.scatter([note2.get_fund_freq()], [note_y])
 (trail2,) = note_ax.plot(freq_history2.to_list(), trail_ys)
 dissonance_dot = dist_ax.scatter(x=[0], y=[note1.calc_tone_dissonance(note2)])
 (dissonance_trail1,) = dist_ax.plot(dissonance_history.to_list())
+(dissonance_plot,) = dissonance_sensitivity_ax.plot(dissonance_sensitivity_ax.get_xlim()[0], dissonance_sensitivity_ax.get_ylim()[0])
 press_id = fig.canvas.mpl_connect("button_press_event", lambda event: inputs.on_mouse_press(event, active_notes, slctd_note_indx))
 move_id = fig.canvas.mpl_connect("motion_notify_event", lambda event: inputs.on_mouse_move(event, active_notes, slctd_note_indx))
 release_id = fig.canvas.mpl_connect("button_release_event", lambda event: inputs.on_mouse_release(event, active_notes, slctd_note_indx))
@@ -115,6 +126,8 @@ def slider_update(val):
             break 
     note_ax.set_xlim(new_xmin, new_xmax) 
     note_ax.set_xticks(notes.note_freqs[min_indx:max_indx], notes.note_labels[min_indx:max_indx]) # Setting ticks is modifying the limits!
+    dissonance_sensitivity_ax.set_xlim(new_xmin, new_xmax)
+    dissonance_sensitivity_ax.set_xticks(notes.note_freqs[min_indx:max_indx], notes.note_labels[min_indx:max_indx]) # Setting ticks is modifying the limits!
 slider.on_changed(slider_update)
 
 def setup():
@@ -123,7 +136,7 @@ def setup():
     slider_update(slider.val)
 
 def update(frame):
-    start = time.time()
+    start_time = time.time()
     
     # update the values
     curr_fund_freq_1 = note1.get_fund_freq()
@@ -137,10 +150,26 @@ def update(frame):
     note2_dot.set_offsets([(curr_fund_freq_2, note_y)])
     dissonance_dot.set_offsets([(dissonance_x, curr_dissonance)])
     dissonance_trail1.set_ydata(dissonance_history.to_list())
+    diss_x = np.linspace(
+        start=dissonance_sensitivity_ax.get_xlim()[0],
+        stop=dissonance_sensitivity_ax.get_xlim()[1],
+        num=100
+        )
+    # Need to re-make the calc_dissonance funditon to note require a played tone
+    # Or I can add a copy function that produces a non-output version of the copied Tone
+    diss_y = []
+    temp_note = note1.copy()
+    for x in diss_x:
+        temp_note.set_fund_freq(x)
+        diss_y.append(temp_note.calc_tone_dissonance(note2))
+    dissonance_plot.set_xdata(diss_x)
+    dissonance_plot.set_ydata(diss_y)
     global dist_max
-    if curr_dissonance > dist_max:
-        dist_max = 1.1 * curr_dissonance
-        dist_ax.set_ylim((0, dist_max))
+    if curr_dissonance > dist_max or max(diss_y) > dist_max:
+        new_max = 1.1 * max(max(diss_y), curr_dissonance)
+        dist_max = new_max
+        dist_ax.set_ylim((0, new_max))
+        dissonance_sensitivity_ax.set_ylim((0, dist_max))
         print("resetting dissonance range")
 
     # update histoiries
@@ -148,18 +177,16 @@ def update(frame):
     freq_history1.advance() # advance so it points to the oldest value for plotting
     freq_history2.set_curr_value(curr_fund_freq_2)
     freq_history2.advance() # advance so it points to the oldest value for plotting
-    # TODO: Add a history for note 2
     dissonance_history.set_curr_value(curr_dissonance)
     dissonance_history.advance()
     
-    fig.canvas.flush_events()
+    # fig.canvas.flush_events()
 
-    end = time.time()
-    extra_frame_time = max(0, frame_length - (end - start))
-    time.sleep(
-        max(0, extra_frame_time)
-    )  # Try to make evey frame a standard amount of time.
-    pass
+    end_time = time.time()
+    # Try to make evey frame a standard amount of time.
+    extra_frame_time = max(0, frame_length - (end_time - start_time))
+    if extra_frame_time > 0:
+        time.sleep(extra_frame_time)
 
 ani = animation.FuncAnimation(fig=fig, func=update, init_func=setup, interval=1_000*1/FRAME_RATE)
 fig.show()
