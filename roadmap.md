@@ -2,6 +2,11 @@
 
 ## Steps to Making a Harmony Stabilization Application
 
+## Where I Left Off
+* moving all input handling to input.py
+* Next is to move the mouse-related input functions. Also still have to test
+* Find a way to handle the global variables about MOUSE_PRESSED and PIANO_MODE
+
 ## Ideas for Next Steps
 * Create an axis that shows nearby dissonances if note1 were to slide
 * Add a smooth slider for note1 that can recreate the peaks in the dissonance I say on music Stack Exchange
