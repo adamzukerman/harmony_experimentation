@@ -1,5 +1,7 @@
 import pynput.keyboard as kb
 import pynput.mouse as ms
+from scipy.optimize import Bounds, minimize
+import numpy as np
 import matplotlib.pyplot as plt
 import notes
 
@@ -51,6 +53,15 @@ def on_press(key, active_notes, slctd_note_indx, globals):
             note.set_fund_freq(note_freq)
         else:
             print("WARNONG: note frequency not found")
+    
+    def resolve_dissonance(note1, note2, x_tol=1e-8, max_step_size=np.inf):
+        temp_tone = note1.copy()
+        solution = minimize(
+            fun=lambda x: (temp_tone.set_fund_freq(x), temp_tone.calc_tone_dissonance(note2))[1],
+            x0=temp_tone.get_fund_freq(),
+            bounds=Bounds(temp_tone.get_fund_freq() / 2, temp_tone.get_fund_freq() * 2)
+            )
+        note1.set_fund_freq(solution.x.item())
 
     normal_mode_key_actions = {
         kb.KeyCode.from_char("1"): enter_piano_mode if not PIANO_MODE else None,
@@ -62,8 +73,13 @@ def on_press(key, active_notes, slctd_note_indx, globals):
         kb.KeyCode.from_char("o"): reset_overtones,
         kb.KeyCode.from_char("a"): hide_yticklabels,
         kb.Key.shift: lambda: None,
-        kb.KeyCode.from_char("r"): lambda: note1.set_fund_freq(STARTING_FREQ_1) and note2.set_fund_freq(STARTING_FREQ_2),
-        kb.KeyCode.from_char("R"): lambda: None,  # Ignoring this section until bug is fixed. Reprioritizing
+        # kb.KeyCode.from_char("r"): lambda: note1.set_fund_freq(STARTING_FREQ_1) and note2.set_fund_freq(STARTING_FREQ_2),
+        kb.KeyCode.from_char("R"): lambda: resolve_dissonance(
+            note1, 
+            note2, 
+            x_tol=note1.get_fund_freq() / 300,
+            max_step_size=note1.get_fund_freq() * (pow(2, 1 / 12) - 1),
+            ),
     }
     piano_mode_key_actions = {
         kb.KeyCode.from_char("1"): turn_off_piano_mode,
@@ -93,6 +109,7 @@ def on_press(key, active_notes, slctd_note_indx, globals):
 
 
 def on_mouse_press(event, notes, slctd_note_indx):
+    # Currently broken becuase of access to axes
     note1 = notes[0]
     note2 = notes[1]
     if not event.ydata or not note_ax == event.inaxes:
@@ -104,6 +121,7 @@ def on_mouse_press(event, notes, slctd_note_indx):
 
 
 def on_mouse_release(event, notes, slctd_note_indx):
+    # Currently broken becuase of access to axes
     note1 = notes[0]
     note2 = notes[1]
     global MOUSE_PRESSED
@@ -111,6 +129,7 @@ def on_mouse_release(event, notes, slctd_note_indx):
 
 
 def on_mouse_move(event, notes, slctd_note_indx):
+    # Currently broken becuase of access to axes
     note1 = notes[0]
     note2 = notes[1]
     global MOUSE_PRESSED

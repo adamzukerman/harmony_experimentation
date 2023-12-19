@@ -3,17 +3,15 @@
 ## Steps to Making a Harmony Stabilization Application
 
 ## Where I Left Off
-* moving all input handling to input.py
-* Next is to move the mouse-related input functions. Also still have to test
+* Next is to move the mouse-related input functions. 
+  * Need to find a good way to give input functions access to the axes. 
 
 ## Ideas for Next Steps
+* Make the resolver move notes smoothly
 * Factor out the matplotlib code into a separate file
-* Create an axis that shows nearby dissonances if note1 were to slide
 * Add a smooth slider for note1 that can recreate the peaks in the dissonance I say on music Stack Exchange
 * change structure of code to support an arbitrary number of notes
 * Set x-axis ticks to show octaves
-* Find method to optimize dissonance of note1
-  * scipy has a minimize_scalar() that works for functions with only one input. Not idea but could word for now.
 * Create a piano-like input using the keyboard. 
   * TODO: Resolve conflicts with matplotlib keybindings
   * Also, this feature feels really crappy. It seems hard to make an intuitive mapping from keyboard to piano keys without an additional graphic
@@ -35,6 +33,9 @@
 * Move keybindings (or all input events) to another file 
 
 ### Completed
+* Find method to optimize dissonance of note1
+* Create an axis that shows nearby dissonances if note1 were to slide
+* moving all input handling to input.py
 * Find a way to handle the global variables about MOUSE_PRESSED and PIANO_MODE
 * Flip the axes of the note axis so notes are shifted horizontally
 * Add a trail for note2

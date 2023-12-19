@@ -5,6 +5,7 @@ import matplotlib
 from matplotlib import animation
 from matplotlib.widgets import Slider
 import matplotlib.pyplot as plt
+from scipy.optimize import Bounds, minimize
 import pynput.keyboard as kb
 import pyo
 from tone import Tone
@@ -98,9 +99,10 @@ note2_dot = note_ax.scatter([note2.get_fund_freq()], [note_y])
 dissonance_dot = dist_ax.scatter(x=[0], y=[note1.calc_tone_dissonance(note2)])
 (dissonance_trail1,) = dist_ax.plot(dissonance_history.to_list())
 (dissonance_plot,) = dissonance_sensitivity_ax.plot(dissonance_sensitivity_ax.get_xlim()[0], dissonance_sensitivity_ax.get_ylim()[0])
-press_id = fig.canvas.mpl_connect("button_press_event", lambda event: inputs.on_mouse_press(event, active_notes, slctd_note_indx))
-move_id = fig.canvas.mpl_connect("motion_notify_event", lambda event: inputs.on_mouse_move(event, active_notes, slctd_note_indx))
-release_id = fig.canvas.mpl_connect("button_release_event", lambda event: inputs.on_mouse_release(event, active_notes, slctd_note_indx))
+# Broken until I give inputs file access to axes
+# press_id = fig.canvas.mpl_connect("button_press_event", lambda event: inputs.on_mouse_press(event, active_notes, slctd_note_indx))
+# move_id = fig.canvas.mpl_connect("motion_notify_event", lambda event: inputs.on_mouse_move(event, active_notes, slctd_note_indx))
+# release_id = fig.canvas.mpl_connect("button_release_event", lambda event: inputs.on_mouse_release(event, active_notes, slctd_note_indx))
 
 def slider_update(val):
     """
@@ -135,7 +137,7 @@ def setup():
     # If I put the actual setupt in here, the window shows up all black
     slider_update(slider.val)
 
-def update(frame):
+def update_graph(frame):
     start_time = time.time()
     
     # update the values
@@ -153,7 +155,7 @@ def update(frame):
     diss_x = np.linspace(
         start=dissonance_sensitivity_ax.get_xlim()[0],
         stop=dissonance_sensitivity_ax.get_xlim()[1],
-        num=100
+        num=200
         )
     # Need to re-make the calc_dissonance funditon to note require a played tone
     # Or I can add a copy function that produces a non-output version of the copied Tone
@@ -188,6 +190,6 @@ def update(frame):
     if extra_frame_time > 0:
         time.sleep(extra_frame_time)
 
-ani = animation.FuncAnimation(fig=fig, func=update, init_func=setup, interval=1_000*1/FRAME_RATE)
+ani = animation.FuncAnimation(fig=fig, func=update_graph, init_func=setup, interval=1_000*1/FRAME_RATE)
 fig.show()
 plt.show()
