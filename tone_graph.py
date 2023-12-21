@@ -33,12 +33,13 @@ dissonance_history = CircularList(TRAIL_TIME * FRAME_RATE, init_value=0)
     
 # Setting up pyo objects
 # output_device_name = "Adam’s AirPods Pro" # Requires weird single quote with opt+shift+]
-output_device_name = pyo.pa_get_output_devices()[0][0] # This is probably the better solution that connects to most headphones
+# output_device_name = pyo.pa_get_output_devices()[0][0] # This is probably the better solution that connects to most headphones
+# print("Audio output device: ", output_device_name)
 s = pyo.Server()
-device_names, device_indexes = pyo.pa_get_output_devices()
-my_dev_index = device_names.index(output_device_name)
-pyo_output_location = device_indexes[my_dev_index]
-s.setOutputDevice(pyo_output_location)
+# device_names, device_indexes = pyo.pa_get_output_devices()
+# my_dev_index = device_names.index(output_device_name)
+# pyo_output_location = device_indexes[my_dev_index]
+# s.setOutputDevice(pyo_output_location)
 s.boot()
 s.start()
 note_collection = NoteCollection()
@@ -59,7 +60,7 @@ listener.start()
 
 # Initial setup of axes and gridspec
 matplotlib.use("MacOSX")
-fig = plt.figure()
+fig = plt.figure(layout="constrained")
 fig.set_size_inches(w=10, h=6)
 widths = [1, 30]
 heights = [1, 1, 1]
@@ -70,9 +71,11 @@ note_ax = fig.add_subplot(spec[0, 1])
 dissonance_sensitivity_ax = fig.add_subplot(spec[1,1:])
 dist_ax = fig.add_subplot(spec[2, 1:])
 # Dissonance history axis settings
+dist_ax.set_title("Dissonance History")
 dist_ax.set_xlim(0, 1.1 * len(freq_history1))  # have the note in middle of graph
 dist_ax.set_ylim(0, dist_max)  # used for dissonance equation
 # note_ax (main axis) settings
+note_ax.set_title("Note Pitches")
 note_ax.set_ylim(0, TRAIL_TIME)  # have the note in middle of graph
 note_ax.set_xscale("log")
 note_ax.get_xaxis().set_major_formatter(matplotlib.ticker.NullFormatter())
@@ -81,6 +84,7 @@ note_ax.get_xaxis().set_minor_locator(matplotlib.ticker.NullLocator())
 note_ax.get_xaxis().set_major_locator(matplotlib.ticker.NullLocator())
 note_ax.set_xticks(notes.note_freqs, notes.note_labels)
 #Dissonance sensitivity axis settings (mostly the same as note_axis)
+dissonance_sensitivity_ax.set_title("Dissonance by Note1 Pitch")
 dissonance_sensitivity_ax.set_xscale("log")
 dissonance_sensitivity_ax.get_xaxis().set_major_formatter(matplotlib.ticker.NullFormatter())
 dissonance_sensitivity_ax.get_xaxis().set_minor_formatter(matplotlib.ticker.NullFormatter())
