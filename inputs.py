@@ -4,6 +4,7 @@ from scipy.optimize import Bounds, minimize
 import numpy as np
 import matplotlib.pyplot as plt
 import notes
+from tone import Tone
 
 MOUSE_PRESSED = False
 PIANO_MODE = False
@@ -31,7 +32,7 @@ def on_press(key, active_notes, slctd_note_indx, globals):
         return False
 
     def adjust_note_frequency(note, exponent):
-        note.set_fund_freq(note.get_fund_freq() * pow(2, exponent))
+        note.set_fund_freq(note.get_fund_freq_target() * pow(2, exponent))
 
     def reset_overtones():
         print("Resetting overtones randomly")
@@ -55,13 +56,16 @@ def on_press(key, active_notes, slctd_note_indx, globals):
             print("WARNONG: note frequency not found")
     
     def resolve_dissonance(note1, note2, x_tol=1e-8, max_step_size=np.inf):
-        temp_tone = note1.copy()
+        # BUG: always finding a 0 gradient
         solution = minimize(
-            fun=lambda x: (temp_tone.set_fund_freq(x), temp_tone.calc_tone_dissonance(note2))[1],
-            x0=temp_tone.get_fund_freq(),
-            bounds=Bounds(temp_tone.get_fund_freq() / 2, temp_tone.get_fund_freq() * 2)
+            fun=lambda x: Tone(fund_freq=float(x), mul=note1.get_mul(), overtones=note1.get_overtones()).calc_tone_dissonance(note2),
+            x0=note1.get_fund_freq_target(),
+            bounds=Bounds(note1.get_fund_freq_target() / 2, note1.get_fund_freq_target() * 2),
+            options={"disp":True}
             )
         note1.set_fund_freq(solution.x.item())
+        print(f"found minimum: ", solution.x.item())
+        print("function values: ", solution.fun)
 
     normal_mode_key_actions = {
         kb.KeyCode.from_char("1"): enter_piano_mode if not PIANO_MODE else None,
