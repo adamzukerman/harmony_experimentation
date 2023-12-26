@@ -166,7 +166,7 @@ def update_graph(frame):
     diss_y = []
     temp_note = note1.copy()
     for x in diss_x:
-        temp_note.set_fund_freq(x)
+        temp_note = Tone(fund_freq = float(x), mul=note1.get_mul(), overtones=note1.get_overtones())
         diss_y.append(temp_note.calc_tone_dissonance(note2))
     dissonance_plot.set_xdata(diss_x)
     dissonance_plot.set_ydata(diss_y)
