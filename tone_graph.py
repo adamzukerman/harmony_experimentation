@@ -140,6 +140,8 @@ def setup():
     # Setting up graph properties
     # If I put the actual setupt in here, the window shows up all black
     slider_update(slider.val)
+    artists = [trail1, trail2, note1_dot, note2_dot, dissonance_plot, dissonance_trail1, dissonance_dot]
+    return artists
 
 def update_graph(frame):
     start_time = time.time()
@@ -194,6 +196,9 @@ def update_graph(frame):
     if extra_frame_time > 0:
         time.sleep(extra_frame_time)
 
-ani = animation.FuncAnimation(fig=fig, func=update_graph, init_func=setup, interval=1_000*1/FRAME_RATE)
+    artists = [trail1, trail2, note1_dot, note2_dot, dissonance_plot, dissonance_trail1, dissonance_dot]
+    return artists
+
+ani = animation.FuncAnimation(fig=fig, func=update_graph, init_func=setup, interval=0, blit=True)
 fig.show()
 plt.show()
