@@ -25,7 +25,7 @@ STARTING_FREQ_2 = 220
 dist_max = 0.1
 
 # Directly derived from constants
-frame_length = 1 / FRAME_RATE
+min_frame_length = 1 / FRAME_RATE
 freq_history1 = CircularList(TRAIL_TIME * FRAME_RATE, init_value=0)
 freq_history2 = CircularList(TRAIL_TIME * FRAME_RATE, init_value=0)
 dissonance_history = CircularList(TRAIL_TIME * FRAME_RATE, init_value=0)
@@ -74,6 +74,10 @@ dist_ax = fig.add_subplot(spec[2, 1:])
 dist_ax.set_title("Dissonance History")
 dist_ax.set_xlim(0, 1.1 * len(freq_history1))  # have the note in middle of graph
 dist_ax.set_ylim(0, dist_max)  # used for dissonance equation
+dist_ax.get_xaxis().set_major_locator(matplotlib.ticker.NullLocator())
+dist_ax.get_xaxis().set_major_formatter(matplotlib.ticker.NullFormatter())
+dist_ax.yaxis.tick_right()
+dist_ax.tick_params(labelright=True, labelleft=True)
 # note_ax (main axis) settings
 note_ax.set_title("Note Pitches")
 note_ax.set_ylim(0, TRAIL_TIME)  # have the note in middle of graph
@@ -136,7 +140,7 @@ def slider_update(val):
     dissonance_sensitivity_ax.set_xticks(notes.note_freqs[min_indx:max_indx], notes.note_labels[min_indx:max_indx]) # Setting ticks is modifying the limits!
 slider.on_changed(slider_update)
 
-def setup():
+def setup_graph():
     # Setting up graph properties
     # If I put the actual setupt in here, the window shows up all black
     slider_update(slider.val)
@@ -188,17 +192,17 @@ def update_graph(frame):
     dissonance_history.set_curr_value(curr_dissonance)
     dissonance_history.advance()
     
-    # fig.canvas.flush_events()
-
     end_time = time.time()
     # Try to make evey frame a standard amount of time.
-    extra_frame_time = max(0, frame_length - (end_time - start_time))
+    extra_frame_time = max(0, min_frame_length - (end_time - start_time))
     if extra_frame_time > 0:
+        print("stalling to maintain max frame rate")
         time.sleep(extra_frame_time)
 
     artists = [trail1, trail2, note1_dot, note2_dot, dissonance_plot, dissonance_trail1, dissonance_dot]
     return artists
 
-ani = animation.FuncAnimation(fig=fig, func=update_graph, init_func=setup, interval=0, blit=True)
+# ani = animation.FuncAnimation(fig=fig, func=update_graph, init_func=setup_graph, interval=0, blit=True)
+ani = animation.FuncAnimation(fig=fig, func=update_graph, init_func=setup_graph, interval=0, blit=False)
 fig.show()
 plt.show()

@@ -59,7 +59,7 @@ def on_press(key, active_notes, slctd_note_indx, globals):
         solution = minimize(
             fun=lambda x: (temp_tone.set_fund_freq(x), temp_tone.calc_tone_dissonance(note2))[1],
             x0=temp_tone.get_fund_freq(),
-            bounds=Bounds(temp_tone.get_fund_freq() / 2, temp_tone.get_fund_freq() * 2)
+            bounds=Bounds(temp_tone.get_fund_freq() * pow(2, -1 / 12), temp_tone.get_fund_freq() * pow(2, 1/12))
             )
         note1.set_fund_freq(solution.x.item())
 
