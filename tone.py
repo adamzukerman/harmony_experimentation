@@ -6,13 +6,13 @@ import numpy as np
 
 class Tone:
     # tone_server = pyo.Server().boot() # should this be here inside a class?
-    def __init__(self, fund_freq: float, mul: float, overtones: list = {}):
+    def __init__(self, fund_freq: float, mul: float, overtones: dict = {}):
         self.__fund_freq = fund_freq
         self.__mul = mul
         self.__overtones = overtones
         self.__overtones[1] = mul
         self._sines = []
-        self.__generate_sines(self.__fund_freq, self.__overtones)
+        self.__generate_sines(self.__fund_freq, self.__overtones.copy())
 
     def copy(self):
         """Returns a deep copy of this Tone that not being played"""
@@ -112,3 +112,14 @@ class Tone:
         Z = pow(math.e, -1 * b1 * s * dist) - pow(math.e, -1 * b2 * s * dist)
         R = pow(X, 0.1) * 0.5 * pow(Y, 3.11) * Z
         return R
+
+    def __eq__(self, other):
+        if not isinstance(other, Tone):
+            return False
+        if self.get_fund_freq() != other.get_fund_freq():
+            return False
+        if self.get_mul() != other.get_mul():
+            return False
+        if self.get_overtones() != other.get_overtones():
+            return False
+        return True

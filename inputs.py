@@ -4,17 +4,19 @@ from scipy.optimize import Bounds, minimize
 import numpy as np
 import matplotlib.pyplot as plt
 import notes
+from tone import Tone
+from circular_list import CircularList
 
 MOUSE_PRESSED = False
 PIANO_MODE = False
 
 
-def on_press(key, active_notes, slctd_note_indx, globals):
-    # TODO: change body to use slctd_note_indx
+def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globals):
+    # TODO: change body to use slctd_tone_id
     # TODO: search for and remove all keybindings that conflict with matplotlib
-    # More conflicting keybindings with matplotlib
-    note1 = active_notes[0]
-    note2 = active_notes[1]
+    # TODO: still using note1 for everything that's not just shifting not pitches
+    note1 = tone_collection.get_selected_tone()
+    note2 = tone_collection.get_tone_by_index(1)
     global PIANO_MODE
 
     def enter_piano_mode():
@@ -35,8 +37,8 @@ def on_press(key, active_notes, slctd_note_indx, globals):
 
     def reset_overtones():
         print("Resetting overtones randomly")
-        note1.set_random_overtones(15)
-        note2.set_random_overtones(15)
+        for tone_id, tone in tone_collection:
+            tone.set_random_overtones(15)
 
     def hide_yticklabels():
         note_ax.set_yticklabels([])
@@ -54,32 +56,68 @@ def on_press(key, active_notes, slctd_note_indx, globals):
         else:
             print("WARNONG: note frequency not found")
     
-    def resolve_dissonance(note1, note2, x_tol=1e-8, max_step_size=np.inf):
-        temp_tone = note1.copy()
+    # def resolve_dissonance(note1, note2, x_tol=1e-8, max_step_size=np.inf):
+    #     temp_tone = note1.copy()
+    #     solution = minimize(
+    #         fun=lambda x: (temp_tone.set_fund_freq(x), temp_tone.calc_tone_dissonance(note2))[1],
+    #         x0=temp_tone.get_fund_freq(),
+    #         bounds=Bounds(temp_tone.get_fund_freq() * pow(2, -1 / 12), temp_tone.get_fund_freq() * pow(2, 1/12))
+    #         )
+    #     note1.set_fund_freq(solution.x.item())
+
+    def resolve_dissonance(tone_collection):
+        temp_collection =tone_collection.copy()
+        slctd_tone = temp_collection.get_selected_tone()
         solution = minimize(
-            fun=lambda x: (temp_tone.set_fund_freq(x), temp_tone.calc_tone_dissonance(note2))[1],
-            x0=temp_tone.get_fund_freq(),
-            bounds=Bounds(temp_tone.get_fund_freq() * pow(2, -1 / 12), temp_tone.get_fund_freq() * pow(2, 1/12))
+            fun=lambda x: (slctd_tone.set_fund_freq(x), temp_collection.calc_dissonance())[1],
+            x0=slctd_tone.get_fund_freq(),
+            bounds=Bounds(slctd_tone.get_fund_freq() * pow(2, -1 / 12), slctd_tone.get_fund_freq() * pow(2, 1/12))
             )
-        note1.set_fund_freq(solution.x.item())
+        tone_collection.get_selected_tone().set_fund_freq(solution.x.item())
+
+    def select_next_tone() -> None:
+        print("running select_next_tone")
+        if tone_collection.slctd_tone_id == None:
+            print("cannot select next tone when no tone is selected")
+            return None
+        tone_ids = tone_collection.get_tone_ids()
+        if tone_collection.slctd_tone_id not in tone_ids:
+            raise ValueError("Selected tone not in tone collection")
+        slctd_tone_indx = tone_ids.index(tone_collection.slctd_tone_id)
+        new_sltd_tone_indx = (slctd_tone_indx + 1) % len(tone_ids)
+        tone_collection.set_selected_tone(tone_ids[new_sltd_tone_indx])
+        print("changing selected tone to " + str(tone_collection.slctd_tone_id))
+
+    def add_new_tone() -> None:
+        print("adding a new tone")
+        init_freq = notes.A4
+        new_tone = Tone(fund_freq=init_freq, mul=0.4)
+        new_tone.set_random_overtones(15)
+        new_tone_id = tone_collection.add_tone(tone=new_tone)
+        tone_collection.play_tone(new_tone_id)
+        print(f"adding new tone_id {new_tone_id} to tone_dots and tone_trails")
+        freq_histories[new_tone_id] = CircularList(size=globals["FRAME_RATE"] * globals["TRAIL_TIME"], init_value=init_freq)
+        tone_trails[new_tone_id] = globals["note_ax"].plot(freq_histories[new_tone_id].to_list(), globals["trail_ys"])[0]
+        tone_dots[new_tone_id] = globals["note_ax"].scatter(x=[init_freq], y=[globals["note_y"]])
 
     normal_mode_key_actions = {
         kb.KeyCode.from_char("1"): enter_piano_mode if not PIANO_MODE else None,
         kb.KeyCode.from_char("q"): stop_program,
-        kb.KeyCode.from_char("u"): lambda: adjust_note_frequency(note1, 1 / 12),
-        kb.KeyCode.from_char("U"): lambda: adjust_note_frequency(note1, -1 / 12),
-        kb.KeyCode.from_char("i"): lambda: adjust_note_frequency(note2, 1 / 12),
-        kb.KeyCode.from_char("I"): lambda: adjust_note_frequency(note2, -1 / 12),
+        kb.KeyCode.from_char("u"): lambda: adjust_note_frequency(tone_collection.get_selected_tone(), 1 / 12),
+        kb.KeyCode.from_char("U"): lambda: adjust_note_frequency(tone_collection.get_selected_tone(), -1 / 12),
         kb.KeyCode.from_char("o"): reset_overtones,
         kb.KeyCode.from_char("a"): hide_yticklabels,
         kb.Key.shift: lambda: None,
-        # kb.KeyCode.from_char("r"): lambda: note1.set_fund_freq(STARTING_FREQ_1) and note2.set_fund_freq(STARTING_FREQ_2),
-        kb.KeyCode.from_char("R"): lambda: resolve_dissonance(
-            note1, 
-            note2, 
-            x_tol=note1.get_fund_freq() / 300,
-            max_step_size=note1.get_fund_freq() * (pow(2, 1 / 12) - 1),
-            ),
+        kb.Key.shift_r: lambda: None,
+        kb.KeyCode.from_char("a"): add_new_tone,
+        kb.Key.left: select_next_tone,
+        # kb.KeyCode.from_char("R"): lambda: resolve_dissonance(
+        #     note1, 
+        #     note2, 
+        #     x_tol=note1.get_fund_freq() / 300,
+        #     max_step_size=note1.get_fund_freq() * (pow(2, 1 / 12) - 1),
+        #     ),
+        kb.KeyCode.from_char("R"): lambda: resolve_dissonance(tone_collection),
     }
     piano_mode_key_actions = {
         kb.KeyCode.from_char("1"): turn_off_piano_mode,
@@ -111,7 +149,6 @@ def on_press(key, active_notes, slctd_note_indx, globals):
 def on_mouse_press(event, notes, slctd_note_indx):
     # Currently broken becuase of access to axes
     note1 = notes[0]
-    note2 = notes[1]
     if not event.ydata or not note_ax == event.inaxes:
         return None
     y_pos = float(event.ydata)  # pyo can't handle numpy dtypes
@@ -122,8 +159,6 @@ def on_mouse_press(event, notes, slctd_note_indx):
 
 def on_mouse_release(event, notes, slctd_note_indx):
     # Currently broken becuase of access to axes
-    note1 = notes[0]
-    note2 = notes[1]
     global MOUSE_PRESSED
     MOUSE_PRESSED = False
 
