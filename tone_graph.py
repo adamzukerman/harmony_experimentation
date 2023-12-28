@@ -23,6 +23,7 @@ FREQ_MIN = 30
 STARTING_FREQ_1 = 440
 STARTING_FREQ_2 = 220
 NORM_SIZE = 20
+TONE_MOVE_TIME = 0.5
 SLCTD_SIZE = 80  
 dist_max = 0.1
 
@@ -44,8 +45,8 @@ s = pyo.Server()
 s.boot()
 s.start()
 tone_collection = ToneCollection()
-note1 = Tone(fund_freq=notes.A4, mul=0.4)
-note2 = Tone(fund_freq=notes.A4/2, mul=0.4)
+note1 = Tone(fund_freq=notes.A4, mul=0.4, time=TONE_MOVE_TIME)
+note2 = Tone(fund_freq=notes.A4/2, mul=0.4, time=TONE_MOVE_TIME)
 note1.set_random_overtones(15)
 note2.set_random_overtones(15)
 note1_id = tone_collection.add_tone(note1)
@@ -109,7 +110,7 @@ press_id = fig.canvas.mpl_connect("button_press_event", lambda event: inputs.on_
 move_id = fig.canvas.mpl_connect("motion_notify_event", lambda event: inputs.on_mouse_move(event, tone_collection=tone_collection, note_ax=note_ax))
 release_id = fig.canvas.mpl_connect("button_release_event", lambda event: inputs.on_mouse_release(event))
 
-listener = kb.Listener(on_press=lambda key: inputs.on_press(key,  tone_collection=tone_collection,  tone_trails=tone_trails,  tone_dots=tone_dots, freq_histories=freq_histories, globals={"server":s, "TRAIL_TIME":TRAIL_TIME, "FRAME_RATE":FRAME_RATE, "note_ax":note_ax, "note_y":note_y, "trail_ys":trail_ys}))
+listener = kb.Listener(on_press=lambda key: inputs.on_press(key,  tone_collection=tone_collection,  tone_trails=tone_trails,  tone_dots=tone_dots, freq_histories=freq_histories, globals={"server":s, "TRAIL_TIME":TRAIL_TIME, "FRAME_RATE":FRAME_RATE, "note_ax":note_ax, "note_y":note_y, "trail_ys":trail_ys, "TONE_MOVE_TIME":TONE_MOVE_TIME}))
 listener.start()
 
 def slider_update(val):
@@ -153,13 +154,11 @@ def update_graph(frame):
     curr_dissonance = tone_collection.calc_dissonance()
 
     # Udate graphs
-    curr_freqs = {}
     for tone_id, tone in tone_collection:
-        curr_freqs[tone_id] = tone.get_fund_freq()
         tone_trails[tone_id].set_xdata(freq_histories[tone_id].to_list())
-        tone_dots[tone_id].set_offsets([(tone.get_fund_freq(), note_y)])
+        tone_dots[tone_id].set_offsets([(tone.get_fund_freq_curr(), note_y)])
         tone_dots[tone_id].set_sizes([SLCTD_SIZE if tone_collection.slctd_tone_id == tone_id else NORM_SIZE])
-        freq_histories[tone_id].set_curr_value(tone.get_fund_freq())
+        freq_histories[tone_id].set_curr_value(tone.get_fund_freq_curr())
         freq_histories[tone_id].advance()
 
     dissonance_dot.set_offsets([(dissonance_x, curr_dissonance)])

@@ -7,8 +7,8 @@ from notes import note_freq_dict
 
 class Tone:
     # tone_server = pyo.Server().boot() # should this be here inside a class?
-    def __init__(self, fund_freq: float, mul: float, overtones: dict = {}):
-        self.__fund_freq = fund_freq
+    def __init__(self, fund_freq: float, mul: float, overtones: list = {}, time=0):
+        self.__fund_freq = pyo.SigTo(value=fund_freq, time=time, init=fund_freq)
         self.__mul = mul
         self.__overtones = overtones
         self.__overtones[1] = mul
@@ -17,7 +17,7 @@ class Tone:
 
     def copy(self):
         """Returns a deep copy of this Tone that not being played"""
-        return Tone(self.__fund_freq, self.__mul, self.__overtones)
+        return Tone(self.__fund_freq.value, self.__mul, self.__overtones.copy(), time=self.__fund_freq.time)
 
     def __generate_sines(self, fund_freq, overtones):
         self._sines = {
@@ -25,9 +25,16 @@ class Tone:
             for (overtone, amp) in self.__overtones.items()
         }
 
+    # def get_fund_freq(self):
+    #     # how to make sure this can't be used to modify the object when copy is not allowed for int/float?
+    #     return self.__fund_freq.get()
+
     def get_fund_freq(self):
         # how to make sure this can't be used to modify the object when copy is not allowed for int/float?
-        return self.__fund_freq
+        return self.__fund_freq.value
+
+    def get_fund_freq_curr(self):
+        return self.__fund_freq.get()
 
     # Maybe this shouldn't be accessible?
     def _get_sines(self):
@@ -50,10 +57,11 @@ class Tone:
             sine.stop()
 
     def set_fund_freq(self, freq: float):
-        self._set_sines(freq, self.get_overtones())
-        self.__fund_freq = freq
+        # self._set_sines(freq, self.get_overtones())
+        # self.__fund_freq = freq
+        self.__fund_freq.setValue(float(freq))
 
-    def _set_sines(self, fund_freq, overtones):
+    def _set_sines(self, fund_freq: pyo.SigTo | pyo.Dummy, overtones):
         for overtone, amp in overtones.items():
             if overtone not in self._sines.keys():
                 self._sines[overtone] = pyo.Sine(
@@ -61,8 +69,10 @@ class Tone:
                 )
             else:
                 sine = self._sines[overtone]
-                sine.mul = amp
-                sine.freq = float(fund_freq) * overtone
+                sine.mul = self.__mul * amp
+                # sine.mul = amp
+                # hopefully frequency doesnt need intervention and will listen to the class's __fund_freq
+                # sine.freq = float(fund_freq) * overtone
 
     def set_overtones(self, overtones: dict):
         for overtone, amp in overtones.items():
@@ -73,7 +83,7 @@ class Tone:
             # elif overtone == 1:
             #     print("WARNING: overwriting the fundamental when resetting overtones")
         self.__overtones = overtones
-        self._set_sines(self.get_fund_freq(), overtones)
+        self._set_sines(self.__fund_freq, overtones)
 
     def set_random_overtones(self, limit: int):
         rand_overtones = self.create_rand_overtones(limit)
@@ -106,25 +116,43 @@ class Tone:
 
     def calc_tone_dissonance(self, other_tone):
         dissonance = 0
-        for sine in self._sines.values():
-            for other_sine in other_tone._get_sines().values():
-                dissonance += self._calc_sine_dissonance(sine, other_sine)
+        for overtone, amp in self.__overtones.items():
+            for other_overtone, other_amp in other_tone.__overtones.items():
+                dissonance += self._calc_sine_dissonance(
+                    sine1_freq = self.get_fund_freq()*overtone,
+                    sine1_amp=amp,
+                    sine2_freq=other_tone.get_fund_freq()*other_overtone,
+                    sine2_amp=other_amp
+                    )
         return dissonance
 
-    def _calc_sine_dissonance(self, note1, note2):
-        # Optimization note: calculating constants on every call
+
+    # TODO: do not retreive frequencies from sines. Just use the overtones and the fund_freq of Tone
+    def _calc_sine_dissonance(self, sine1_freq, sine1_amp, sine2_freq, sine2_amp):
+        # Optimization sine: calculating constants on every call
         # Used naming of variables in the paper the formula came from
-        X = note1.mul * note2.mul
-        Y = 2 * min(note1.mul, note2.mul) / (note1.mul + note2.mul)
+        X = sine1_amp * sine2_amp
+        Y = 2 * min(sine1_amp, sine2_amp) / (sine1_amp + sine2_amp)
         b1 = 3.5
         b2 = 5.75
         s1 = 0.0207
         s2 = 18.96
-        s = 0.24 / (s1 * min(note1.freq, note2.freq) + s2)
-        dist = abs(note1.freq - note2.freq)
+        s = 0.24 / (s1 * min(sine1_freq, sine2_freq) + s2)
+        dist = abs(sine1_freq - sine2_freq)
         Z = pow(math.e, -1 * b1 * s * dist) - pow(math.e, -1 * b2 * s * dist)
         R = pow(X, 0.1) * 0.5 * pow(Y, 3.11) * Z
         return R
+
+    def __eq__(self, other):
+        if not isinstance(other, Tone):
+            return False
+        if self.get_fund_freq() != other.get_fund_freq():
+            return False
+        if self.get_mul() != other.get_mul():
+            return False
+        if self.get_overtones() != other.get_overtones():
+            return False
+        return True
 
     def __eq__(self, other):
         if not isinstance(other, Tone):
