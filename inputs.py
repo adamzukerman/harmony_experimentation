@@ -56,15 +56,6 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         else:
             print("WARNONG: note frequency not found")
     
-    # def resolve_dissonance(note1, note2, x_tol=1e-8, max_step_size=np.inf):
-    #     temp_tone = note1.copy()
-    #     solution = minimize(
-    #         fun=lambda x: (temp_tone.set_fund_freq(x), temp_tone.calc_tone_dissonance(note2))[1],
-    #         x0=temp_tone.get_fund_freq(),
-    #         bounds=Bounds(temp_tone.get_fund_freq() * pow(2, -1 / 12), temp_tone.get_fund_freq() * pow(2, 1/12))
-    #         )
-    #     note1.set_fund_freq(solution.x.item())
-
     def resolve_dissonance(tone_collection):
         temp_collection =tone_collection.copy()
         slctd_tone = temp_collection.get_selected_tone()
@@ -111,13 +102,8 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         kb.Key.shift_r: lambda: None,
         kb.KeyCode.from_char("a"): add_new_tone,
         kb.Key.left: select_next_tone,
-        # kb.KeyCode.from_char("R"): lambda: resolve_dissonance(
-        #     note1, 
-        #     note2, 
-        #     x_tol=note1.get_fund_freq() / 300,
-        #     max_step_size=note1.get_fund_freq() * (pow(2, 1 / 12) - 1),
-        #     ),
         kb.KeyCode.from_char("R"): lambda: resolve_dissonance(tone_collection),
+        kb.KeyCode.from_char("i"): tone_collection.get_selected_tone().snap_to_nearest_note,
     }
     piano_mode_key_actions = {
         kb.KeyCode.from_char("1"): turn_off_piano_mode,

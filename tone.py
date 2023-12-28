@@ -2,6 +2,7 @@
 import pyo
 import math
 import numpy as np
+from notes import note_freq_dict
 
 
 class Tone:
@@ -90,6 +91,18 @@ class Tone:
         for i in range(2, limit):
             rand_overtones[i] = np.random.rand() * 0.3 * 1 / pow(i, 1.5)
         return rand_overtones
+
+    def snap_to_nearest_note(self):
+        closest_note = list(note_freq_dict.keys())[0]
+        closest_log_freq = math.log10(note_freq_dict[closest_note])
+        this_log_freq = math.log10(self.get_fund_freq())
+        for note_name, note_freq in note_freq_dict.items():
+            log_temp_freq = math.log10(note_freq)
+            if abs(log_temp_freq - this_log_freq) < abs(closest_log_freq - this_log_freq):
+                closest_note = note_name
+                closest_log_freq = log_temp_freq
+        self.set_fund_freq(note_freq_dict[closest_note])
+
 
     def calc_tone_dissonance(self, other_tone):
         dissonance = 0

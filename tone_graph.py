@@ -201,7 +201,7 @@ def update_graph(frame):
     artists =  list(tone_dots.values()) + list(tone_trails.values()) + [dissonance_plot, dissonance_trail1, dissonance_dot]
     return artists
 
-# ani = animation.FuncAnimation(fig=fig, func=update_graph, init_func=setup_graph, interval=0, blit=True)
-ani = animation.FuncAnimation(fig=fig, func=update_graph, init_func=setup_graph, interval=0, blit=False)
+ani = animation.FuncAnimation(fig=fig, func=update_graph, init_func=setup_graph, interval=0, blit=True)
+# ani = animation.FuncAnimation(fig=fig, func=update_graph, init_func=setup_graph, interval=0, blit=False)
 fig.show()
 plt.show()
