@@ -103,10 +103,11 @@ tone_trails = {tone_id : note_ax.plot(freq_histories[tone_id].to_list(), trail_y
 dissonance_dot = dist_ax.scatter(x=[0], y=[note1.calc_tone_dissonance(note2)])
 (dissonance_trail1,) = dist_ax.plot(dissonance_history.to_list())
 (dissonance_plot,) = dissonance_sensitivity_ax.plot(dissonance_sensitivity_ax.get_xlim()[0], dissonance_sensitivity_ax.get_ylim()[0])
-# Broken until I give inputs file access to axes
-# press_id = fig.canvas.mpl_connect("button_press_event", lambda event: inputs.on_mouse_press(event, active_notes, slctd_note_indx))
-# move_id = fig.canvas.mpl_connect("motion_notify_event", lambda event: inputs.on_mouse_move(event, active_notes, slctd_note_indx))
-# release_id = fig.canvas.mpl_connect("button_release_event", lambda event: inputs.on_mouse_release(event, active_notes, slctd_note_indx))
+
+# mouse events
+press_id = fig.canvas.mpl_connect("button_press_event", lambda event: inputs.on_mouse_press(event, tone_collection=tone_collection, note_ax=note_ax))
+move_id = fig.canvas.mpl_connect("motion_notify_event", lambda event: inputs.on_mouse_move(event, tone_collection=tone_collection, note_ax=note_ax))
+release_id = fig.canvas.mpl_connect("button_release_event", lambda event: inputs.on_mouse_release(event))
 
 listener = kb.Listener(on_press=lambda key: inputs.on_press(key,  tone_collection=tone_collection,  tone_trails=tone_trails,  tone_dots=tone_dots, freq_histories=freq_histories, globals={"server":s, "TRAIL_TIME":TRAIL_TIME, "FRAME_RATE":FRAME_RATE, "note_ax":note_ax, "note_y":note_y, "trail_ys":trail_ys}))
 listener.start()

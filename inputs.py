@@ -146,28 +146,27 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         print("key behavior undefined")
 
 
-def on_mouse_press(event, notes, slctd_note_indx):
+def on_mouse_press(event, tone_collection, note_ax):
     # Currently broken becuase of access to axes
-    note1 = notes[0]
-    if not event.ydata or not note_ax == event.inaxes:
+    slctd_tone = tone_collection.get_selected_tone()
+    if not event.xdata or not note_ax == event.inaxes:
         return None
-    y_pos = float(event.ydata)  # pyo can't handle numpy dtypes
-    note1.set_fund_freq(float(y_pos))
+    x_pos = float(event.xdata)  # pyo can't handle numpy dtypes
+    slctd_tone.set_fund_freq(float(x_pos))
     global MOUSE_PRESSED
     MOUSE_PRESSED = True
 
 
-def on_mouse_release(event, notes, slctd_note_indx):
+def on_mouse_release(event):
     # Currently broken becuase of access to axes
     global MOUSE_PRESSED
     MOUSE_PRESSED = False
 
 
-def on_mouse_move(event, notes, slctd_note_indx):
+def on_mouse_move(event, tone_collection, note_ax):
     # Currently broken becuase of access to axes
-    note1 = notes[0]
-    note2 = notes[1]
+    slctd_tone = tone_collection.get_selected_tone()
     global MOUSE_PRESSED
     if (not MOUSE_PRESSED) or (not event.ydata):
         return None
-    note1.set_fund_freq(float(event.ydata))
+    slctd_tone.set_fund_freq(float(event.xdata))
