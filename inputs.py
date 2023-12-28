@@ -14,9 +14,8 @@ PIANO_MODE = False
 def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globals):
     # TODO: change body to use slctd_tone_id
     # TODO: search for and remove all keybindings that conflict with matplotlib
-    # TODO: still using note1 for everything that's not just shifting not pitches
-    note1 = tone_collection.get_selected_tone()
-    note2 = tone_collection.get_tone_by_index(1)
+    # TODO: still using slctd_tone for everything that's not just shifting not pitches
+    slctd_tone = tone_collection.get_selected_tone()
     global PIANO_MODE
 
     def enter_piano_mode():
@@ -107,18 +106,18 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
     }
     piano_mode_key_actions = {
         kb.KeyCode.from_char("1"): turn_off_piano_mode,
-        kb.Key.space: lambda: set_note_frequency(note1, "C4"),
-        kb.KeyCode.from_char("u"): lambda: set_note_frequency(note1, "C#/Db4"),
-        kb.KeyCode.from_char("j"): lambda: set_note_frequency(note1, "D4"),
-        kb.KeyCode.from_char("i"): lambda: set_note_frequency(note1, "D#/Eb4"),
-        kb.KeyCode.from_char("k"): lambda: set_note_frequency(note1, "E4"),
-        kb.KeyCode.from_char("l"): lambda: set_note_frequency(note1, "F4"),
-        kb.KeyCode.from_char("p"): lambda: set_note_frequency(note1, "F#/Gb4"),
-        kb.KeyCode.from_char("f"): lambda: set_note_frequency(note1, "B4"),
-        kb.KeyCode.from_char("r"): lambda: set_note_frequency(note1, "A#/Bb4"),
-        kb.KeyCode.from_char("d"): lambda: set_note_frequency(note1, "A3"),
-        kb.KeyCode.from_char("e"): lambda: set_note_frequency(note1, "G#/Ab3"),
-        kb.KeyCode.from_char("s"): lambda: set_note_frequency(note1, "G3"), 
+        kb.Key.space: lambda: set_note_frequency(slctd_tone, "C4"),
+        kb.KeyCode.from_char("u"): lambda: set_note_frequency(slctd_tone, "C#/Db4"),
+        kb.KeyCode.from_char("j"): lambda: set_note_frequency(slctd_tone, "D4"),
+        kb.KeyCode.from_char("i"): lambda: set_note_frequency(slctd_tone, "D#/Eb4"),
+        kb.KeyCode.from_char("k"): lambda: set_note_frequency(slctd_tone, "E4"),
+        kb.KeyCode.from_char("l"): lambda: set_note_frequency(slctd_tone, "F4"),
+        kb.KeyCode.from_char("p"): lambda: set_note_frequency(slctd_tone, "F#/Gb4"),
+        kb.KeyCode.from_char("f"): lambda: set_note_frequency(slctd_tone, "B4"),
+        kb.KeyCode.from_char("r"): lambda: set_note_frequency(slctd_tone, "A#/Bb4"),
+        kb.KeyCode.from_char("d"): lambda: set_note_frequency(slctd_tone, "A3"),
+        kb.KeyCode.from_char("e"): lambda: set_note_frequency(slctd_tone, "G#/Ab3"),
+        kb.KeyCode.from_char("s"): lambda: set_note_frequency(slctd_tone, "G3"), 
     }
     
     if PIANO_MODE:
