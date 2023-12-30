@@ -232,6 +232,17 @@ def update_graph(frame):
         )
         freq_histories[tone_id].set_curr_value(tone.get_fund_freq_curr())
         freq_histories[tone_id].advance()
+    for tone_id, tone in tone_collection.removed_tones.items():
+        if tone_id in tone_trails:
+            # erase data for artist because removing artist doesn't work with blitting
+            tone_trails[tone_id].set_xdata([])
+            tone_trails[tone_id].set_ydata([])
+        if tone_id in tone_dots:
+            # make dot disappear because deleting is difficult
+            tone_dots[tone_id].set_sizes([0])
+        if tone_id in freq_histories:
+            freq_histories.pop(tone_id)
+    tone_collection.flush_removed_tones()
 
     # Update the dissonance dot
     dissonance_dot.set_offsets([(dissonance_x, curr_dissonance)])
@@ -247,6 +258,7 @@ def update_graph(frame):
     temp_collection = tone_collection.copy()
     temp_slctd_tone = temp_collection.get_selected_tone()
     for x in diss_x:
+        if temp_slctd_tone == None: break
         temp_slctd_tone.set_fund_freq(x)
         diss_y.append(temp_collection.calc_dissonance())
     dissonance_plot.set_xdata(diss_x)
@@ -254,7 +266,7 @@ def update_graph(frame):
 
     # Update dissonance y-axes
     global dist_max
-    if curr_dissonance > dist_max or max(diss_y) > dist_max:
+    if diss_y and (curr_dissonance > dist_max or max(diss_y) > dist_max):
         new_max = 1.1 * max(max(diss_y), curr_dissonance)
         dist_max = new_max
         dist_ax.set_ylim((0, new_max))

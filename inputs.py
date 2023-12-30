@@ -127,6 +127,7 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         ),
         kb.KeyCode.from_char("o"): reset_overtones,
         kb.KeyCode.from_char("a"): hide_yticklabels,
+        kb.KeyCode.from_char("d"): lambda: tone_collection.remove_tone(tone_id=tone_collection.slctd_tone_id),
         kb.Key.shift: lambda: None,
         kb.Key.shift_r: lambda: None,
         kb.KeyCode.from_char("a"): add_new_tone,
@@ -135,7 +136,7 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         kb.KeyCode.from_char("r"): lambda: resolve_above_bass(tone_collection),
         kb.KeyCode.from_char(
             "i"
-        ): tone_collection.get_selected_tone().snap_to_nearest_note,
+        ): lambda: tone_collection.get_selected_tone().snap_to_nearest_note if tone_collection.get_selected_tone() != None else None,
     }
     piano_mode_key_actions = {
         kb.KeyCode.from_char("1"): turn_off_piano_mode,
