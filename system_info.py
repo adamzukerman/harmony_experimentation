@@ -1,4 +1,5 @@
 import pyo
+
 print("host APIs: ", pyo.pa_list_host_apis())
 print("all devices: ", pyo.pa_list_devices())
 print("default input: ", pyo.pa_get_default_input())

@@ -17,7 +17,12 @@ class Tone:
 
     def copy(self):
         """Returns a deep copy of this Tone that not being played"""
-        return Tone(self.__fund_freq.value, self.__mul, self.__overtones.copy(), time=self.__fund_freq.time)
+        return Tone(
+            self.__fund_freq.value,
+            self.__mul,
+            self.__overtones.copy(),
+            time=self.__fund_freq.time,
+        )
 
     def __generate_sines(self, fund_freq, overtones):
         self._sines = {
@@ -108,24 +113,24 @@ class Tone:
         this_log_freq = math.log10(self.get_fund_freq())
         for note_name, note_freq in note_freq_dict.items():
             log_temp_freq = math.log10(note_freq)
-            if abs(log_temp_freq - this_log_freq) < abs(closest_log_freq - this_log_freq):
+            if abs(log_temp_freq - this_log_freq) < abs(
+                closest_log_freq - this_log_freq
+            ):
                 closest_note = note_name
                 closest_log_freq = log_temp_freq
         self.set_fund_freq(note_freq_dict[closest_note])
-
 
     def calc_tone_dissonance(self, other_tone):
         dissonance = 0
         for overtone, amp in self.__overtones.items():
             for other_overtone, other_amp in other_tone.__overtones.items():
                 dissonance += self._calc_sine_dissonance(
-                    sine1_freq = self.get_fund_freq()*overtone,
+                    sine1_freq=self.get_fund_freq() * overtone,
                     sine1_amp=amp,
-                    sine2_freq=other_tone.get_fund_freq()*other_overtone,
-                    sine2_amp=other_amp
-                    )
+                    sine2_freq=other_tone.get_fund_freq() * other_overtone,
+                    sine2_amp=other_amp,
+                )
         return dissonance
-
 
     # TODO: do not retreive frequencies from sines. Just use the overtones and the fund_freq of Tone
     def _calc_sine_dissonance(self, sine1_freq, sine1_amp, sine2_freq, sine2_amp):

@@ -41,7 +41,7 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
 
     def hide_yticklabels():
         note_ax.set_yticklabels([])
-    
+
     def turn_off_piano_mode():
         global PIANO_MODE
         print("turning off piano mode")
@@ -54,16 +54,36 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
             note.set_fund_freq(note_freq)
         else:
             print("WARNONG: note frequency not found")
-    
-    def resolve_dissonance(tone_collection):
-        temp_collection =tone_collection.copy()
+
+    def tune_selected_tone(tone_collection):
+        temp_collection = tone_collection.copy()
         slctd_tone = temp_collection.get_selected_tone()
         solution = minimize(
-            fun=lambda x: (slctd_tone.set_fund_freq(x), temp_collection.calc_dissonance())[1],
+            fun=lambda x: (
+                slctd_tone.set_fund_freq(x),
+                temp_collection.calc_dissonance(),
+            )[1],
             x0=slctd_tone.get_fund_freq(),
-            bounds=Bounds(slctd_tone.get_fund_freq() * pow(2, -1 / 12), slctd_tone.get_fund_freq() * pow(2, 1/12))
-            )
+            bounds=Bounds(
+                slctd_tone.get_fund_freq() * pow(2, -1 / 12),
+                slctd_tone.get_fund_freq() * pow(2, 1 / 12),
+            ),
+        )
         tone_collection.get_selected_tone().set_fund_freq(solution.x.item())
+
+    def resolve_tone():
+        pass
+
+    def resolve_above_bass(tone_collection):
+        lowest_tone = tone_collection.get_lowest_tone()
+        lowest_tone_id = tone_collection.get_id_from_tone(lowest_tone)
+        slctd_tone_id_backup = tone_collection.slctd_tone_id
+        for tone_id, tone in tone_collection:
+            if lowest_tone == tone:
+                continue
+            tone_collection.set_selected_tone(tone_id)
+            tune_selected_tone(tone_collection)
+        tone_collection.set_selected_tone(slctd_tone_id_backup)
 
     def select_next_tone() -> None:
         print("running select_next_tone")
@@ -86,23 +106,36 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         new_tone_id = tone_collection.add_tone(tone=new_tone)
         tone_collection.play_tone(new_tone_id)
         print(f"adding new tone_id {new_tone_id} to tone_dots and tone_trails")
-        freq_histories[new_tone_id] = CircularList(size=globals["FRAME_RATE"] * globals["TRAIL_TIME"], init_value=init_freq)
-        tone_trails[new_tone_id] = globals["note_ax"].plot(freq_histories[new_tone_id].to_list(), globals["trail_ys"])[0]
-        tone_dots[new_tone_id] = globals["note_ax"].scatter(x=[init_freq], y=[globals["note_y"]])
+        freq_histories[new_tone_id] = CircularList(
+            size=globals["FRAME_RATE"] * globals["TRAIL_TIME"], init_value=init_freq
+        )
+        tone_trails[new_tone_id] = globals["note_ax"].plot(
+            freq_histories[new_tone_id].to_list(), globals["trail_ys"]
+        )[0]
+        tone_dots[new_tone_id] = globals["note_ax"].scatter(
+            x=[init_freq], y=[globals["note_y"]]
+        )
 
     normal_mode_key_actions = {
         kb.KeyCode.from_char("1"): enter_piano_mode if not PIANO_MODE else None,
         kb.KeyCode.from_char("q"): stop_program,
-        kb.KeyCode.from_char("u"): lambda: adjust_note_frequency(tone_collection.get_selected_tone(), 1 / 12),
-        kb.KeyCode.from_char("U"): lambda: adjust_note_frequency(tone_collection.get_selected_tone(), -1 / 12),
+        kb.KeyCode.from_char("u"): lambda: adjust_note_frequency(
+            tone_collection.get_selected_tone(), 1 / 12
+        ),
+        kb.KeyCode.from_char("U"): lambda: adjust_note_frequency(
+            tone_collection.get_selected_tone(), -1 / 12
+        ),
         kb.KeyCode.from_char("o"): reset_overtones,
         kb.KeyCode.from_char("a"): hide_yticklabels,
         kb.Key.shift: lambda: None,
         kb.Key.shift_r: lambda: None,
         kb.KeyCode.from_char("a"): add_new_tone,
         kb.Key.left: select_next_tone,
-        kb.KeyCode.from_char("R"): lambda: resolve_dissonance(tone_collection),
-        kb.KeyCode.from_char("i"): tone_collection.get_selected_tone().snap_to_nearest_note,
+        kb.KeyCode.from_char("R"): lambda: tune_selected_tone(tone_collection),
+        kb.KeyCode.from_char("r"): lambda: resolve_above_bass(tone_collection),
+        kb.KeyCode.from_char(
+            "i"
+        ): tone_collection.get_selected_tone().snap_to_nearest_note,
     }
     piano_mode_key_actions = {
         kb.KeyCode.from_char("1"): turn_off_piano_mode,
@@ -117,12 +150,12 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         kb.KeyCode.from_char("r"): lambda: set_note_frequency(slctd_tone, "A#/Bb4"),
         kb.KeyCode.from_char("d"): lambda: set_note_frequency(slctd_tone, "A3"),
         kb.KeyCode.from_char("e"): lambda: set_note_frequency(slctd_tone, "G#/Ab3"),
-        kb.KeyCode.from_char("s"): lambda: set_note_frequency(slctd_tone, "G3"), 
+        kb.KeyCode.from_char("s"): lambda: set_note_frequency(slctd_tone, "G3"),
     }
-    
+
     if PIANO_MODE:
         action = piano_mode_key_actions.get(key)
-    else: 
+    else:
         action = normal_mode_key_actions.get(key)
 
     if action:
