@@ -26,6 +26,7 @@ NORM_SIZE = 20
 TONE_MOVE_TIME = 0.5
 SLCTD_SIZE = 80
 dist_max = 0.1
+prev_frame_time = time.time()
 
 # Directly derived from constants
 min_frame_length = 1 / FRAME_RATE
@@ -219,6 +220,7 @@ def setup_graph():
 
 
 def update_graph(frame):
+    global prev_frame_time
     start_time = time.time()
 
     curr_dissonance = tone_collection.calc_dissonance()
@@ -249,29 +251,30 @@ def update_graph(frame):
     dissonance_trail1.set_ydata(dissonance_history.to_list())
 
     # Update the dissonance sensitivity plot
-    diss_x = np.linspace(
-        start=dissonance_sensitivity_ax.get_xlim()[0],
-        stop=dissonance_sensitivity_ax.get_xlim()[1],
-        num=200,
-    )
-    diss_y = []
-    temp_collection = tone_collection.copy()
-    temp_slctd_tone = temp_collection.get_selected_tone()
-    for x in diss_x:
-        if temp_slctd_tone == None: break
-        temp_slctd_tone.set_fund_freq(x)
-        diss_y.append(temp_collection.calc_dissonance())
-    dissonance_plot.set_xdata(diss_x)
-    dissonance_plot.set_ydata(diss_y)
-
-    # Update dissonance y-axes
-    global dist_max
-    if diss_y and (curr_dissonance > dist_max or max(diss_y) > dist_max):
-        new_max = 1.1 * max(max(diss_y), curr_dissonance)
-        dist_max = new_max
-        dist_ax.set_ylim((0, new_max))
-        dissonance_sensitivity_ax.set_ylim((0, dist_max))
-        print("resetting dissonance range")
+    if tone_collection.get_selected_tone_update_time() > prev_frame_time: 
+        diss_x = np.linspace(
+            start=dissonance_sensitivity_ax.get_xlim()[0],
+            stop=dissonance_sensitivity_ax.get_xlim()[1],
+            num=200,
+        )
+        diss_y = []
+        temp_collection = tone_collection.copy()
+        temp_slctd_tone = temp_collection.get_selected_tone()
+        for x in diss_x:
+            if temp_slctd_tone == None: break
+            temp_slctd_tone.set_fund_freq(x)
+            diss_y.append(temp_collection.calc_dissonance())
+        dissonance_plot.set_xdata(diss_x)
+        dissonance_plot.set_ydata(diss_y)
+    
+        # Update dissonance y-axes
+        global dist_max
+        if diss_y and (curr_dissonance > dist_max or max(diss_y) > dist_max):
+            new_max = 1.1 * max(max(diss_y), curr_dissonance)
+            dist_max = new_max
+            dist_ax.set_ylim((0, new_max))
+            dissonance_sensitivity_ax.set_ylim((0, dist_max))
+            print("resetting dissonance range")
 
     # update histoiries
     dissonance_history.set_curr_value(curr_dissonance)
@@ -284,6 +287,7 @@ def update_graph(frame):
         print("stalling to maintain max frame rate")
         time.sleep(extra_frame_time)
 
+    prev_frame_time = end_time
     artists = (
         list(tone_dots.values())
         + list(tone_trails.values())
