@@ -137,6 +137,8 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         kb.KeyCode.from_char(
             "i"
         ): lambda: tone_collection.get_selected_tone().snap_to_nearest_note if tone_collection.get_selected_tone() != None else None,
+        kb.KeyCode.from_char("m"): tone_collection.reduce_dissonance,
+        kb.KeyCode.from_char("n"): tone_collection.increase_dissonance,
     }
     piano_mode_key_actions = {
         kb.KeyCode.from_char("1"): turn_off_piano_mode,
