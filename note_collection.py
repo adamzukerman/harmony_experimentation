@@ -189,15 +189,17 @@ class ToneCollection:
         # Find the frequency adjustment factor that minimizes the dissonance and apply the adjustment factor
         for adjustment in freq_mul_options:
             next_tone.set_fund_freq(orig_frequency * pow(2, adjustment))
+            new_dissonance = temp_collection.calc_dissonance()
             if temp_collection.calc_dissonance() < min_dissonance:
                 selected_adjustment = adjustment
+                min_dissonance = new_dissonance
         next_tone.set_fund_freq(orig_frequency * pow(2, selected_adjustment))
         return self.__reduce_dissonance_helper(temp_collection, ids_to_resolve, lowest_tone_id)
 
     def increase_dissonance(self):
         """
-        Goes through ids_to_resolve and for each tone in the collection
-        it will find the least dissonant frequency within a whole-step of the current frequency
+        Goes through ids_to_unresolve and for each tone in the collection
+        it will find the most dissonant frequency within a whole-step of the current frequency
         """
         # Use a temporary collection so none of the played tones are adjusted during the algorithm
         temp_collection = self.copy(preserve_ids=True)
@@ -221,15 +223,20 @@ class ToneCollection:
         # skip to the next one if we are looking at the lowest tone
         if next_tone_id == lowest_tone_id:
             print("skipping the lowest tone")
-            return self.__reduce_dissonance_helper(temp_collection, ids_to_unresolve, lowest_tone_id)
+            return self.__increase_dissonance_helper(temp_collection, ids_to_unresolve, lowest_tone_id)
 
+        min_freq = temp_collection.get_tone(lowest_tone_id).get_fund_freq()
         orig_frequency = next_tone.get_fund_freq()
         max_dissonance = temp_collection.calc_dissonance()
         selected_adjustment = 0
-        # Find the frequency adjustment factor that minimizes the dissonance and apply the adjustment factor
+        # Find the frequency adjustment factor that minimizes the dissonance and apply the adjustment factor without going below min freq
         for adjustment in freq_mul_options:
             next_tone.set_fund_freq(orig_frequency * pow(2, adjustment))
-            if temp_collection.calc_dissonance() > max_dissonance:
+            new_dissonance = temp_collection.calc_dissonance()
+            if next_tone.get_fund_freq() < min_freq:
+                continue
+            if new_dissonance > max_dissonance:
                 selected_adjustment = adjustment
+                max_dissonance = new_dissonance
         next_tone.set_fund_freq(orig_frequency * pow(2, selected_adjustment))
         return self.__increase_dissonance_helper(temp_collection, ids_to_unresolve, lowest_tone_id)

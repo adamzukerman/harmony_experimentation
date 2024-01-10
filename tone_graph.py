@@ -284,7 +284,7 @@ def update_graph(frame):
     # Try to make evey frame a standard amount of time.
     extra_frame_time = max(0, min_frame_length - (end_time - start_time))
     if extra_frame_time > 0:
-        print("stalling to maintain max frame rate")
+        # print("stalling to maintain max frame rate")
         time.sleep(extra_frame_time)
 
     prev_frame_time = end_time
