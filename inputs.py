@@ -132,8 +132,8 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         kb.Key.shift_r: lambda: None,
         kb.KeyCode.from_char("a"): add_new_tone,
         kb.Key.left: select_next_tone,
-        kb.KeyCode.from_char("R"): lambda: tune_selected_tone(tone_collection),
-        kb.KeyCode.from_char("r"): lambda: resolve_above_bass(tone_collection),
+        kb.KeyCode.from_char("r"): lambda: tune_selected_tone(tone_collection),
+        kb.KeyCode.from_char("R"): lambda: resolve_above_bass(tone_collection),
         kb.KeyCode.from_char(
             "i"
         ): lambda: tone_collection.get_selected_tone().snap_to_nearest_note if tone_collection.get_selected_tone() != None else None,
