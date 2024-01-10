@@ -12,7 +12,7 @@ from tone import Tone
 from circular_list import CircularList
 import inputs
 import notes
-from note_collection import ToneCollection
+from tone_collection import ToneCollection
 
 # Setting up file-wide constants
 # TODO Move this to a parameters file?
@@ -20,8 +20,6 @@ FRAME_RATE = 60
 TRAIL_TIME = 5  # number of seconds to show of pitch history
 FREQ_MAX = 4_000
 FREQ_MIN = 30
-STARTING_FREQ_1 = 440
-STARTING_FREQ_2 = 220
 NORM_SIZE = 20
 TONE_MOVE_TIME = 0.5
 SLCTD_SIZE = 80
