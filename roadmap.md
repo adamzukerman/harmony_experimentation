@@ -5,9 +5,6 @@
 ## Where I Left Off
 
 ## Ideas for Next Steps
-* Factor out the matplotlib code into a separate file
-* Add a smooth slider for note1 that can recreate the peaks in the dissonance I say on music Stack Exchange
-* change structure of code to support an arbitrary number of notes
 * Create a piano-like input using the keyboard. 
   * TODO: Resolve conflicts with matplotlib keybindings
   * Also, this feature feels really crappy. It seems hard to make an intuitive mapping from keyboard to piano keys without an additional graphic
@@ -22,6 +19,7 @@
 * stop building the set of notes from the middle out
 
 ### Completed
+* Change structure of code to support an arbitrary number of notes
 * Create options to add notes
   * Have a running list of active notes.
   * Have a method to add and remove active notes
@@ -30,7 +28,7 @@
 * Make the resolver move notes smoothly
 * Find method to optimize dissonance of note1
 * Create an axis that shows nearby dissonances if note1 were to slide
-* moving all input handling to input.py
+* Moving all input handling to input.py
 * Find a way to handle the global variables about MOUSE_PRESSED and PIANO_MODE
 * Flip the axes of the note axis so notes are shifted horizontally
 * Add a trail for note2
@@ -42,11 +40,11 @@
 * Fix range modification so that setting ticks does not impact the range of the y axis. Only set ticks within given range
 * Convert tone_graph to using matplotlib animation API
 * Make the yaxis limits adapt to maximum values as they come 
-* make the dissonance look more like the moving note values instead of the bar graph
+* Make the dissonance look more like the moving note values instead of the bar graph
 * Create a circular list for holding running histories
 * Modify the dissonance calculation to take into account all the overtones of the tones
-* create a tone class that captures the harmonic spectrum of a sound.
-* put a log scale to the graph
+* Create a tone class that captures the harmonic spectrum of a sound.
+* Put a log scale to the graph
 * Create and test the dissonance function http://www.acousticslab.org/learnmoresra/moremodel.html
 * On the second graph, put the dissonance between the notes
 * Learn how to generate sines
@@ -60,10 +58,8 @@
 * Create a second graph in the same window
 * on the second graph, put the distance between the notes
 
-## Handwritten Notes
-
-
-## Ideas Ideas fort the Distant Future
+## Ideas for the Distant Future
 * Convert this into a viewable web page somehow
   * Could also post a video with the published code
 * Create a program that decomposes instruments/sounds into synthesizer settings (like amplitudes of triangle/sine/etc. waves)
+* Give users more control over the timbre of the tones
