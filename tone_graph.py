@@ -73,6 +73,7 @@ dissonance_sensitivity_ax = fig.add_subplot(spec[1, 1:])
 dist_ax = fig.add_subplot(spec[2, 1:])
 # Dissonance history axis settings
 dist_ax.set_title("Dissonance History")
+dist_ax.set_ylabel("Dissonance")
 dist_ax.set_xlim(
     0, 1.1 * len(list(freq_histories.values())[0])
 )  # have the note in middle of graph
@@ -83,7 +84,9 @@ dist_ax.yaxis.tick_right()
 dist_ax.tick_params(labelright=True, labelleft=True)
 # note_ax (main axis) settings
 note_ax.set_title("Note Pitches")
+note_ax.set_ylabel("Time")
 note_ax.set_ylim(0, TRAIL_TIME)  # have the note in middle of graph
+note_ax.tick_params(left=False, labelleft=False)
 note_ax.set_xscale("log")
 note_ax.get_xaxis().set_major_formatter(matplotlib.ticker.NullFormatter())
 note_ax.get_xaxis().set_minor_formatter(matplotlib.ticker.NullFormatter())
@@ -91,7 +94,8 @@ note_ax.get_xaxis().set_minor_locator(matplotlib.ticker.NullLocator())
 note_ax.get_xaxis().set_major_locator(matplotlib.ticker.NullLocator())
 note_ax.set_xticks(notes.note_freqs, notes.note_labels)
 # Dissonance sensitivity axis settings (mostly the same as note_axis)
-dissonance_sensitivity_ax.set_title("Dissonance by Selected Pitch")
+dissonance_sensitivity_ax.set_title("Dissonance by Pitch of Selected Tone")
+dissonance_sensitivity_ax.set_ylabel("Dissonance")
 dissonance_sensitivity_ax.set_xscale("log")
 dissonance_sensitivity_ax.get_xaxis().set_major_formatter(
     matplotlib.ticker.NullFormatter()
