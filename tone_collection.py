@@ -33,6 +33,7 @@ class ToneCollection:
     def add_tone(self, tone: Tone):
         self.active_tones[self._next_id] = tone
         if self.slctd_tone_id is None:
+            print("Adding tone to an empty collection")
             self.set_selected_tone(self._next_id)
         self._next_id += 1
         return self._next_id - 1
@@ -240,3 +241,20 @@ class ToneCollection:
                 max_dissonance = new_dissonance
         next_tone.set_fund_freq(orig_frequency * pow(2, selected_adjustment))
         return self.__increase_dissonance_helper(temp_collection, ids_to_unresolve, lowest_tone_id)
+
+
+    def __repr__(self) -> str:
+        num_tones = len(self.active_tones)
+        tones = self.active_tones
+        selected_tone_id = self.slctd_tone_id
+        selected_tone = self.active_tones.get(selected_tone_id)
+        repr_string = f"""
+        Status of tone collection at time ({time.time()})-----------------------------------------
+        Number of tones in collection: {num_tones}
+        Selected tone id: {selected_tone_id}
+        Selected tone: {selected_tone}
+        Tones in collection: {tones}
+        Time of last modification: {self.__time_selected_tone_changed}
+
+        """
+        return repr_string
