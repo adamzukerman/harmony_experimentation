@@ -22,7 +22,7 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
     global PIANO_MODE
 
     def enter_piano_mode():
-        print("entering piano mode")
+        logger.info("entering piano mode")
         global PIANO_MODE
         PIANO_MODE = True
 
@@ -30,7 +30,7 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         server = globals.get("server")
         if server:
             server.stop()
-        print("Terminating")
+        logger.info("Terminating")
         plt.close("all")
         return False
 
@@ -38,7 +38,7 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         note.set_fund_freq(note.get_fund_freq() * pow(2, exponent))
 
     def reset_overtones():
-        print("Resetting overtones randomly")
+        logger.info("Resetting overtones randomly")
         for tone_id, tone in tone_collection:
             tone.set_random_overtones(15)
 
@@ -47,16 +47,16 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
 
     def turn_off_piano_mode():
         global PIANO_MODE
-        print("turning off piano mode")
+        logger.info("turning off piano mode")
         PIANO_MODE = False
 
     def set_note_frequency(note, note_name):
-        print("setting note frequency to " + note_name)
+        logger.info("setting note frequency to " + note_name)
         note_freq = notes.note_freq_dict.get(note_name)
         if note_freq:
             note.set_fund_freq(note_freq)
         else:
-            print("WARNONG: note frequency not found")
+            logger.warning("WARNONG: note frequency not found")
 
     def tune_selected_tone(tone_collection):
         temp_collection = tone_collection.copy()
@@ -103,9 +103,9 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         tone_collection.set_selected_tone(slctd_tone_id_backup)
 
     def select_next_tone() -> None:
-        print("running select_next_tone")
+        logger.info("running select_next_tone")
         if tone_collection.slctd_tone_id == None:
-            print("cannot select next tone when no tone is selected")
+            logger.info("cannot select next tone when no tone is selected")
             return None
         tone_ids = tone_collection.get_tone_ids()
         if tone_collection.slctd_tone_id not in tone_ids:
@@ -113,17 +113,17 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         slctd_tone_indx = tone_ids.index(tone_collection.slctd_tone_id)
         new_sltd_tone_indx = (slctd_tone_indx + 1) % len(tone_ids)
         tone_collection.set_selected_tone(tone_ids[new_sltd_tone_indx])
-        print("changing selected tone to " + str(tone_collection.slctd_tone_id))
+        logger.info("changing selected tone to " + str(tone_collection.slctd_tone_id))
 
     def add_new_tone() -> None:
-        print("adding a new tone")
+        logger.info("adding a new tone")
         init_freq = notes.A4
         new_tone = Tone(fund_freq=init_freq, mul=0.4, time=globals["TONE_MOVE_TIME"])
         new_tone.set_random_overtones(15)
         new_tone_id = tone_collection.add_tone(tone=new_tone)
         tone_collection.set_selected_tone(new_tone_id)
         tone_collection.play_tone(new_tone_id)
-        print(f"adding new tone_id {new_tone_id} to tone_dots and tone_trails")
+        logger.info(f"adding new tone_id {new_tone_id} to tone_dots and tone_trails")
         freq_histories[new_tone_id] = CircularList(
             size=globals["FRAME_RATE"] * globals["TRAIL_TIME"], init_value=init_freq
         )
@@ -135,9 +135,11 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         )
 
     def align_tone_with_piano():
-        print("aligning tone with axis ticks")
         if tone_collection.get_selected_tone() is not None:
-            tone_collection.get_selected_tone().snap_to_nearest_note 
+            logger.info("aligning tone with axis ticks")
+            tone_collection.get_selected_tone().snap_to_nearest_note() 
+        else:
+            logger.warning("tone for alignment not found")
     
     def align_all_tones_with_piano():
         for _, tone in tone_collection:
@@ -160,13 +162,13 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         kb.KeyCode.from_char("a"): add_new_tone,
         kb.Key.left: select_next_tone,
         kb.KeyCode.from_char("t"): lambda: tune_selected_tone(tone_collection),
-        kb.KeyCode.from_char("r"): lambda: resolve_tone,
+        kb.KeyCode.from_char("r"): resolve_tone,
         kb.KeyCode.from_char("R"): lambda: resolve_above_bass(tone_collection),
         kb.KeyCode.from_char("i"): align_tone_with_piano,
         kb.KeyCode.from_char("I"): align_all_tones_with_piano,
         kb.KeyCode.from_char("m"): tone_collection.reduce_dissonance,
         kb.KeyCode.from_char("n"): tone_collection.increase_dissonance,
-        kb.KeyCode.from_char("p"): lambda: print(tone_collection),
+        kb.KeyCode.from_char("p"): lambda: logger.info(tone_collection),
     }
     piano_mode_key_actions = {
         kb.KeyCode.from_char("1"): turn_off_piano_mode,
@@ -191,9 +193,9 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
 
     if action:
         action()
-        print(f"Action ({action}) Executed")
+        logger.info(f"Action for key '{key}' Executed")
     else:
-        print("key behavior undefined")
+        logger.info("key behavior undefined")
 
 
 def on_mouse_press(event, tone_collection, note_ax):

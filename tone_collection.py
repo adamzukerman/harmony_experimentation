@@ -37,7 +37,7 @@ class ToneCollection:
     def add_tone(self, tone: Tone):
         self.active_tones[self._next_id] = tone
         if self.slctd_tone_id is None:
-            print("Adding tone to an empty collection")
+            logger.info("Adding tone to an empty collection")
             self.set_selected_tone(self._next_id)
         self._next_id += 1
         return self._next_id - 1
@@ -48,7 +48,7 @@ class ToneCollection:
         Defaults to using tone_id. Uses tone instead if not given tone_id
         """
         if len(self) < 2:
-            print("skipped deleting tone becuse only one remains")
+            logger.info("skipped deleting tone becuse only one remains")
             return
         if tone_id == None and tone == None:
             raise ValueError("must provide either and id or a tone")
@@ -96,6 +96,7 @@ class ToneCollection:
     def get_selected_tone(self):
         if self.slctd_tone_id is None:
             return None
+        logger.debug(f"Retrieving selected tone with id {self.slctd_tone_id}")
         return self.active_tones[self.slctd_tone_id]
 
     def get_selected_tone_id(self):
@@ -176,7 +177,7 @@ class ToneCollection:
     def __reduce_dissonance_helper(self, temp_collection, ids_to_resolve, lowest_tone_id):
         #base case
         if not ids_to_resolve:
-            print("finished finding a resolution")
+            logger.info("finished finding a resolution")
             return temp_collection
 
         freq_mul_options = [-2/12, -1/12, 0, 1/12, 2/12]
@@ -185,7 +186,7 @@ class ToneCollection:
         next_tone = temp_collection.get_tone(next_tone_id)
         # skip to the next one if we are looking at the lowest tone
         if next_tone_id == lowest_tone_id:
-            print("skipping the lowest tone")
+            logger.info("skipping the lowest tone")
             return self.__reduce_dissonance_helper(temp_collection, ids_to_resolve, lowest_tone_id)
 
         orig_frequency = next_tone.get_fund_freq()
@@ -218,7 +219,7 @@ class ToneCollection:
     def __increase_dissonance_helper(self, temp_collection, ids_to_unresolve, lowest_tone_id):
         #base case
         if not ids_to_unresolve:
-            print("finished finding a non-resolution")
+            logger.info("finished finding a non-resolution")
             return temp_collection
 
         freq_mul_options = [-2/12, -1/12, 0, 1/12, 2/12]
@@ -227,7 +228,7 @@ class ToneCollection:
         next_tone = temp_collection.get_tone(next_tone_id)
         # skip to the next one if we are looking at the lowest tone
         if next_tone_id == lowest_tone_id:
-            print("skipping the lowest tone")
+            logger.info("skipping the lowest tone")
             return self.__increase_dissonance_helper(temp_collection, ids_to_unresolve, lowest_tone_id)
 
         min_freq = temp_collection.get_tone(lowest_tone_id).get_fund_freq()

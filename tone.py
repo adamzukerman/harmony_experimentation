@@ -174,3 +174,11 @@ class Tone:
         if self.get_overtones() != other.get_overtones():
             return False
         return True
+
+    def __repr__(self) -> str:
+
+        repr_string = f"""
+        Tone Status:
+        Freq: {self.get_fund_freq()}
+        """
+        return repr_string
