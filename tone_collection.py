@@ -36,7 +36,7 @@ class ToneCollection:
 
     def add_tone(self, tone: Tone):
         self.active_tones[self._next_id] = tone
-        if self.slctd_tone_id is None:
+        if self.get_selected_tone_id() is None:
             logger.info("Adding tone to an empty collection")
             self.set_selected_tone(self._next_id)
         self._next_id += 1

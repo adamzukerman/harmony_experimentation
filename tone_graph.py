@@ -277,7 +277,13 @@ def update_graph(frame):
             diss_y.append(temp_collection.calc_dissonance())
         dissonance_plot.set_xdata(diss_x)
         dissonance_plot.set_ydata(diss_y)
-        logger.info(tone_trails[tone_collection.get_selected_tone_id()])
+        min_diss_y = min(diss_y)
+        max_diss_y = max(diss_y)
+        diss_y_range = max_diss_y - min_diss_y
+        new_diss_y_bottom = max_diss_y + 0.05*diss_y_range
+        new_diss_y_top = min_diss_y - 0.05*diss_y_range
+        logger.info(f"updating dissonance sensitivity y range to: ({new_diss_y_bottom},{new_diss_y_top})")
+        dissonance_sensitivity_ax.set_ylim(bottom=min_diss_y - 0.05*diss_y_range, top=max_diss_y + 0.05*diss_y_range)
         logger.info(f"setting sinsitivity graph color to: {tone_trails[tone_collection.get_selected_tone_id()].get_color()}")
         dissonance_plot.set_color(tone_trails[tone_collection.get_selected_tone_id()].get_color())
     
