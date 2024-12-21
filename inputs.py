@@ -1,3 +1,4 @@
+import logging
 import pynput.keyboard as kb
 import pynput.mouse as ms
 from scipy.optimize import Bounds, minimize
@@ -10,6 +11,8 @@ from circular_list import CircularList
 MOUSE_PRESSED = False
 PIANO_MODE = False
 
+# setup logger
+logger = logging.getLogger(__name__)
 
 def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globals):
     # TODO: change body to use slctd_tone_id
@@ -72,6 +75,20 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         tone_collection.get_selected_tone().set_fund_freq(solution.x.item())
 
     def resolve_tone():
+        temp_collection = tone_collection.copy()
+        slctd_tone = temp_collection.get_selected_tone()
+        solution = minimize(
+            fun=lambda x: (
+                slctd_tone.set_fund_freq(x),
+                temp_collection.calc_dissonance(),
+            )[1],
+            x0=slctd_tone.get_fund_freq(),
+            bounds=Bounds(
+                slctd_tone.get_fund_freq() * pow(2, -3/12),
+                slctd_tone.get_fund_freq() * pow(2, 3/12),
+            ),
+        )
+        tone_collection.get_selected_tone().set_fund_freq(solution.x.item())
         pass
 
     def resolve_above_bass(tone_collection):
@@ -142,11 +159,9 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         kb.Key.shift_r: lambda: None,
         kb.KeyCode.from_char("a"): add_new_tone,
         kb.Key.left: select_next_tone,
-        kb.KeyCode.from_char("r"): lambda: tune_selected_tone(tone_collection),
+        kb.KeyCode.from_char("t"): lambda: tune_selected_tone(tone_collection),
+        kb.KeyCode.from_char("r"): lambda: resolve_tone,
         kb.KeyCode.from_char("R"): lambda: resolve_above_bass(tone_collection),
-        # kb.KeyCode.from_char(
-        #     "i"
-        # ): lambda: tone_collection.get_selected_tone().snap_to_nearest_note if tone_collection.get_selected_tone() != None else (None, print(tone_collection.get_selected_tone())),
         kb.KeyCode.from_char("i"): align_tone_with_piano,
         kb.KeyCode.from_char("I"): align_all_tones_with_piano,
         kb.KeyCode.from_char("m"): tone_collection.reduce_dissonance,

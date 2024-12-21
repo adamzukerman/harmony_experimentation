@@ -1,5 +1,7 @@
 import time
 import math
+import logging
+import logging_config
 import numpy as np
 import matplotlib
 from matplotlib import animation
@@ -13,6 +15,10 @@ from circular_list import CircularList
 import inputs
 import notes
 from tone_collection import ToneCollection
+
+# Setup logger for project
+logging_config.setup_logging()
+logger = logging.getLogger(__name__)
 
 # Setting up file-wide constants
 # TODO Move this to a parameters file?

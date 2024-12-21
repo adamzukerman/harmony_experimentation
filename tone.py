@@ -1,9 +1,12 @@
 """BUG: Need to check if pyo server is already started"""
-import pyo
 import math
+import logging
 import numpy as np
+import pyo
 from notes import note_freq_dict
 
+# setup logger
+logger = logging.getLogger(__name__)
 
 class Tone:
     # tone_server = pyo.Server().boot() # should this be here inside a class?
@@ -108,9 +111,10 @@ class Tone:
         return rand_overtones
 
     def snap_to_nearest_note(self):
+        print("snapping note")
+        this_log_freq = math.log10(self.get_fund_freq())
         closest_note = list(note_freq_dict.keys())[0]
         closest_log_freq = math.log10(note_freq_dict[closest_note])
-        this_log_freq = math.log10(self.get_fund_freq())
         for note_name, note_freq in note_freq_dict.items():
             log_temp_freq = math.log10(note_freq)
             if abs(log_temp_freq - this_log_freq) < abs(
@@ -119,6 +123,7 @@ class Tone:
                 closest_note = note_name
                 closest_log_freq = log_temp_freq
         self.set_fund_freq(note_freq_dict[closest_note])
+        print(f"Snapping Tone to [{closest_note}]")
 
     def calc_tone_dissonance(self, other_tone):
         dissonance = 0

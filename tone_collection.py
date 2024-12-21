@@ -1,7 +1,11 @@
+import logging
 import math
 import time
 import pyo
 from tone import Tone
+
+# setup logger
+logger = logging.getLogger(__name__)
 
 class ToneCollection:
     def __init__(self):
