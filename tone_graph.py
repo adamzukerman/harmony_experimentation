@@ -86,8 +86,9 @@ dist_ax.set_xlim(
 dist_ax.set_ylim(0, dist_max)  # used for dissonance equation
 dist_ax.get_xaxis().set_major_locator(matplotlib.ticker.NullLocator())
 dist_ax.get_xaxis().set_major_formatter(matplotlib.ticker.NullFormatter())
-dist_ax.yaxis.tick_right()
-dist_ax.tick_params(labelright=True, labelleft=True)
+# dist_ax.yaxis.tick_right()
+# dist_ax.tick_params(labelright=True, labelleft=True)
+dist_ax.tick_params(labelright=False, labelleft=False, right=False, left=False)
 # note_ax (main axis) settings
 note_ax.set_title("Note Pitches")
 note_ax.set_ylabel("Time")
@@ -112,6 +113,7 @@ dissonance_sensitivity_ax.get_xaxis().set_minor_formatter(
 dissonance_sensitivity_ax.get_xaxis().set_minor_locator(matplotlib.ticker.NullLocator())
 dissonance_sensitivity_ax.get_xaxis().set_major_locator(matplotlib.ticker.NullLocator())
 dissonance_sensitivity_ax.set_xticks(notes.note_freqs, notes.note_labels)
+dissonance_sensitivity_ax.tick_params(labelright=False, labelleft=False, right=False, left=False)
 
 slider = Slider(
     slider_ax,
@@ -134,6 +136,7 @@ tone_trails = {
     tone_id: note_ax.plot(freq_histories[tone_id].to_list(), trail_ys)[0]
     for tone_id, tone in tone_collection
 }
+print("TYPE TRAILS: ", type(list(tone_trails.values())[0]))
 dissonance_dot = dist_ax.scatter(x=[0], y=[note1.calc_tone_dissonance(note2)])
 (dissonance_trail1,) = dist_ax.plot(dissonance_history.to_list())
 (dissonance_plot,) = dissonance_sensitivity_ax.plot(
@@ -274,6 +277,9 @@ def update_graph(frame):
             diss_y.append(temp_collection.calc_dissonance())
         dissonance_plot.set_xdata(diss_x)
         dissonance_plot.set_ydata(diss_y)
+        logger.info(tone_trails[tone_collection.get_selected_tone_id()])
+        logger.info(f"setting sinsitivity graph color to: {tone_trails[tone_collection.get_selected_tone_id()].get_color()}")
+        dissonance_plot.set_color(tone_trails[tone_collection.get_selected_tone_id()].get_color())
     
         # Update dissonance y-axes
         global dist_max
