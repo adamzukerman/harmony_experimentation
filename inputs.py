@@ -104,6 +104,7 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         new_tone = Tone(fund_freq=init_freq, mul=0.4, time=globals["TONE_MOVE_TIME"])
         new_tone.set_random_overtones(15)
         new_tone_id = tone_collection.add_tone(tone=new_tone)
+        tone_collection.set_selected_tone(new_tone_id)
         tone_collection.play_tone(new_tone_id)
         print(f"adding new tone_id {new_tone_id} to tone_dots and tone_trails")
         freq_histories[new_tone_id] = CircularList(
@@ -115,6 +116,15 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         tone_dots[new_tone_id] = globals["note_ax"].scatter(
             x=[init_freq], y=[globals["note_y"]]
         )
+
+    def align_tone_with_piano():
+        print("aligning tone with axis ticks")
+        if tone_collection.get_selected_tone() is not None:
+            tone_collection.get_selected_tone().snap_to_nearest_note 
+    
+    def align_all_tones_with_piano():
+        for _, tone in tone_collection:
+            tone.snap_to_nearest_note()
 
     normal_mode_key_actions = {
         kb.KeyCode.from_char("1"): enter_piano_mode if not PIANO_MODE else None,
@@ -134,11 +144,14 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         kb.Key.left: select_next_tone,
         kb.KeyCode.from_char("r"): lambda: tune_selected_tone(tone_collection),
         kb.KeyCode.from_char("R"): lambda: resolve_above_bass(tone_collection),
-        kb.KeyCode.from_char(
-            "i"
-        ): lambda: tone_collection.get_selected_tone().snap_to_nearest_note if tone_collection.get_selected_tone() != None else None,
+        # kb.KeyCode.from_char(
+        #     "i"
+        # ): lambda: tone_collection.get_selected_tone().snap_to_nearest_note if tone_collection.get_selected_tone() != None else (None, print(tone_collection.get_selected_tone())),
+        kb.KeyCode.from_char("i"): align_tone_with_piano,
+        kb.KeyCode.from_char("I"): align_all_tones_with_piano,
         kb.KeyCode.from_char("m"): tone_collection.reduce_dissonance,
         kb.KeyCode.from_char("n"): tone_collection.increase_dissonance,
+        kb.KeyCode.from_char("p"): lambda: print(tone_collection),
     }
     piano_mode_key_actions = {
         kb.KeyCode.from_char("1"): turn_off_piano_mode,
@@ -163,6 +176,7 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
 
     if action:
         action()
+        print(f"Action ({action}) Executed")
     else:
         print("key behavior undefined")
 
