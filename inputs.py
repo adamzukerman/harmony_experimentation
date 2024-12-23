@@ -130,9 +130,9 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         tone_trails[new_tone_id] = globals["note_ax"].plot(
             freq_histories[new_tone_id].to_list(), globals["trail_ys"]
         )[0]
-        tone_dots[new_tone_id] = globals["note_ax"].scatter(
-            x=[init_freq], y=[globals["note_y"]]
-        )
+        tone_dots[new_tone_id] = globals["note_ax"].plot(
+            [init_freq], [globals["note_y"]], marker='o', linestyle='None' #should create param for marker
+        )[0]
 
     def align_tone_with_piano():
         if tone_collection.get_selected_tone() is not None:

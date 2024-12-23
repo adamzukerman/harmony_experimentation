@@ -26,9 +26,9 @@ FRAME_RATE = 60
 TRAIL_TIME = 5  # number of seconds to show of pitch history
 FREQ_MAX = 4_000
 FREQ_MIN = 30
-NORM_SIZE = 20
 TONE_MOVE_TIME = 0.5
-SLCTD_SIZE = 80
+NORM_SIZE = 10
+SLCTD_SIZE = 15
 dist_max = 0.1
 prev_frame_time = time.time()
 
@@ -123,15 +123,17 @@ slider = Slider(
     orientation="vertical",
     valinit=0.25,
 )
-note_y = 0.03 * note_ax.get_ylim()[1]
+low_y, high_y = note_ax.get_ylim()
+note_y = low_y + 0.06 * (high_y - low_y) # height at which the tone dots sit (right above X axis)
 dissonance_x = len(list(freq_histories.values())[0])
 trail_ys = np.linspace(
     start=note_ax.get_ylim()[1], stop=note_y, num=len(list(freq_histories.values())[0])
 )
 tone_dots = {
-    tone_id: note_ax.scatter([tone.get_fund_freq()], [note_y])
+    tone_id: note_ax.plot([tone.get_fund_freq()], [note_y], marker='o', linestyle='None')[0]
     for tone_id, tone in tone_collection
 }
+
 tone_trails = {
     tone_id: note_ax.plot(freq_histories[tone_id].to_list(), trail_ys)[0]
     for tone_id, tone in tone_collection
@@ -238,11 +240,16 @@ def update_graph(frame):
 
     # Update tones and tone_graphs
     for tone_id, tone in tone_collection:
+        is_slctd_tone = tone_id == tone_collection.get_selected_tone_id()
+        tone_color = tone_trails[tone_id].get_color()
         tone_trails[tone_id].set_xdata(freq_histories[tone_id].to_list())
-        tone_dots[tone_id].set_offsets([(tone.get_fund_freq_curr(), note_y)])
-        tone_dots[tone_id].set_sizes(
-            [SLCTD_SIZE if tone_collection.slctd_tone_id == tone_id else NORM_SIZE]
+        tone_dots[tone_id].set_xdata([(tone.get_fund_freq_curr(), note_y)])
+        tone_dots[tone_id].set_color(tone_color)
+        tone_dots[tone_id].set_markersize(
+            SLCTD_SIZE if is_slctd_tone else NORM_SIZE
         )
+        marker_type = '*' if is_slctd_tone else 'o'
+        tone_dots[tone_id].set_marker(marker_type)
         freq_histories[tone_id].set_curr_value(tone.get_fund_freq_curr())
         freq_histories[tone_id].advance()
     for tone_id, tone in tone_collection.removed_tones.items():
