@@ -119,7 +119,7 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         logger.info("adding a new tone")
         init_freq = notes.A4
         new_tone = Tone(fund_freq=init_freq, mul=0.4, time=globals["TONE_MOVE_TIME"])
-        new_tone.set_random_overtones(15)
+        # new_tone.set_random_overtones(15)
         new_tone_id = tone_collection.add_tone(tone=new_tone)
         tone_collection.set_selected_tone(new_tone_id)
         tone_collection.play_tone(new_tone_id)
