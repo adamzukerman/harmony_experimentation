@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import Bounds, minimize
 import pynput.keyboard as kb
 import pyo
+import pandas as pd
 from tone import Tone
 from circular_list import CircularList
 import inputs
@@ -52,8 +53,15 @@ s.start()
 tone_collection = ToneCollection()
 note1 = Tone(fund_freq=notes.A4, mul=0.4, time=TONE_MOVE_TIME)
 note2 = Tone(fund_freq=notes.A4 / 2, mul=0.4, time=TONE_MOVE_TIME)
-note1.set_random_overtones(15)
-note2.set_random_overtones(15)
+logger.info(str(note1))
+logger.info(str(note2))
+# note1.set_random_overtones(15)
+# note2.set_random_overtones(15)
+a4_overtones_df = pd.read_csv('./A4_overtones.csv')
+a4_overtones = {freq_mul:strength for freq_mul, strength in zip(a4_overtones_df["freq_mul"], a4_overtones_df["strength"])}
+logger.info(f"setting overtones to: {a4_overtones}")
+note1.set_overtones(a4_overtones)
+note2.set_overtones(a4_overtones)
 note1_id = tone_collection.add_tone(note1)
 note2_id = tone_collection.add_tone(note2)
 tone_collection.play_all()
@@ -117,11 +125,12 @@ dissonance_sensitivity_ax.tick_params(labelright=False, labelleft=False, right=F
 
 slider = Slider(
     slider_ax,
-    label="range_control",
+    label="Range Control",
     valmin=0,
     valmax=(math.log10(FREQ_MAX / FREQ_MIN) / 2),
     orientation="vertical",
     valinit=0.25,
+    handle_style={"size":20, "facecolor":"white", "edgecolor":"black"}
 )
 low_y, high_y = note_ax.get_ylim()
 note_y = low_y + 0.06 * (high_y - low_y) # height at which the tone dots sit (right above X axis)
@@ -259,7 +268,7 @@ def update_graph(frame):
             tone_trails[tone_id].set_ydata([])
         if tone_id in tone_dots:
             # make dot disappear because deleting is difficult
-            tone_dots[tone_id].set_sizes([0])
+            tone_dots[tone_id].set_visible(False)
         if tone_id in freq_histories:
             freq_histories.pop(tone_id)
     tone_collection.flush_removed_tones()
