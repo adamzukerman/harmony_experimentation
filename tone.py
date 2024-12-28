@@ -10,11 +10,23 @@ logger = logging.getLogger(__name__)
 
 class Tone:
     # tone_server = pyo.Server().boot() # should this be here inside a class?
-    def __init__(self, fund_freq: float, mul: float, overtones: list = {}, time=0):
+    def __init__(self, fund_freq: float, mul: float, overtones: dict = None, time=0):
         self.__fund_freq = pyo.SigTo(value=fund_freq, time=time, init=fund_freq)
         self.__mul = mul
-        self.__overtones = overtones
-        self.__overtones[1] = mul
+        if overtones is None:
+            self.__overtones = {1:mul}
+        else:
+            # Check that fundamental freq is defined
+            if 1 not in overtones.keys():
+                raise ValueError("No strength defined for fundamental frequency in overtones")
+            # check that values for all overtones are valid
+            for freq_mul, strength in overtones.items():
+                if not isinstance(freq_mul, int):
+                    raise ValueError("frequency multiplier in overtones is not an integer")
+                if strength < 0:
+                    raise ValueError("Negative frequency strength passed to overtones")
+            self.__overtones = {freq_mul:strength * mul for freq_mul, strength in overtones.items()}
+            self.__overtones = overtones
         self._sines = []
         self.__generate_sines(self.__fund_freq, self.__overtones.copy())
 
@@ -89,7 +101,7 @@ class Tone:
             elif overtone <= 0:
                 raise ValueError("attempted to set a non-positive overtone")
             # elif overtone == 1:
-            #     print("WARNING: overwriting the fundamental when resetting overtones")
+            #     logger.info("WARNING: overwriting the fundamental when resetting overtones")
         self.__overtones = overtones
         self._set_sines(self.__fund_freq, overtones)
 
@@ -111,7 +123,7 @@ class Tone:
         return rand_overtones
 
     def snap_to_nearest_note(self):
-        print("snapping note")
+        logger.info("snapping note")
         this_log_freq = math.log10(self.get_fund_freq())
         closest_note = list(note_freq_dict.keys())[0]
         closest_log_freq = math.log10(note_freq_dict[closest_note])
@@ -123,11 +135,11 @@ class Tone:
                 closest_note = note_name
                 closest_log_freq = log_temp_freq
         self.set_fund_freq(note_freq_dict[closest_note])
-        print(f"Snapping Tone to [{closest_note}]")
+        logger.info(f"Snapping Tone to [{closest_note}]")
 
     def calc_tone_dissonance(self, other_tone):
         dissonance = 0
-        for overtone, amp in self.__overtones.items():
+        for overtone, amp in self.__overtones.items(): # __overtones = {1:mul1, 2:mul2, 3:mul3, ...}
             for other_overtone, other_amp in other_tone.__overtones.items():
                 dissonance += self._calc_sine_dissonance(
                     sine1_freq=self.get_fund_freq() * overtone,
@@ -137,9 +149,8 @@ class Tone:
                 )
         return dissonance
 
-    # TODO: do not retreive frequencies from sines. Just use the overtones and the fund_freq of Tone
     def _calc_sine_dissonance(self, sine1_freq, sine1_amp, sine2_freq, sine2_amp):
-        # Optimization sine: calculating constants on every call
+        # Optimization idea: stop calculating constants on every call
         # Used naming of variables in the paper the formula came from
         X = sine1_amp * sine2_amp
         Y = 2 * min(sine1_amp, sine2_amp) / (sine1_amp + sine2_amp)
