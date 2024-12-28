@@ -150,9 +150,10 @@ class ToneCollection:
 
     def calc_dissonance(self):
         diss = 0
-        for note1 in self.active_tones.values():
-            for note2 in self.active_tones.values():
-                diss += note1.calc_tone_dissonance(note2)
+        for indx1, note1 in enumerate(self.active_tones.values()):
+            for indx2, note2 in enumerate(self.active_tones.values()):
+                if indx2 > indx1:
+                    diss += note1.calc_tone_dissonance(note2)
         return diss
 
     def __len__(self):
