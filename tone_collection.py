@@ -66,10 +66,10 @@ class ToneCollection:
         if len(self.active_tones) == 0:
             return None
         closest_tone = self.active_tones.values()[0]
-        closest_log_freq = math.log10(closest_tone.get_fund_freq)
+        closest_log_freq = math.log10(closest_tone.get_fund_freq())
         log_target_freq = math.log10(freq)
         for id, tone in self.active_tones.items():
-            log_tone_freq = math.log10(tone.get_fund_freq)
+            log_tone_freq = math.log10(tone.get_fund_freq())
             if abs(log_target_freq - log_tone_freq) < abs(
                 log_target_freq - closest_log_freq
             ):
@@ -86,6 +86,11 @@ class ToneCollection:
             raise ValueError("Tone not in collection")
         self.slctd_tone_id = tone_id
         self.__time_selected_tone_changed = time.time()
+
+    def set_tone_freq(self, tone_id, freq):
+        if tone_id not in self.active_tones.keys():
+            raise ValueError("Tone not in collection")
+        self.active_tones[tone_id].set_fund_freq(freq)
     
     def select_next_tone(self):
         ids = self.get_tone_ids()
@@ -125,6 +130,19 @@ class ToneCollection:
                 return id
         return None
 
+    def get_ids_and_freqs(self):
+        id_freq_dict = {}
+        for id, tone in self:
+            id_freq_dict[id] = tone.get_fund_freq()
+        return id_freq_dict
+
+    def get_fund_freqs(self):
+        fund_freqs = []
+        for id, tone in self:
+            fund_freqs.append(tone.get_fund_freq())
+        return fund_freqs
+
+
     def get_lowest_tone(self):
         lowest_freq = None
         lowest_tone = None
@@ -133,6 +151,10 @@ class ToneCollection:
                 lowest_freq = tone.get_fund_freq()
                 lowest_tone = tone
         return lowest_tone
+    
+    def get_id_lowest_tone(self):
+        lowest_tone = self.get_lowest_tone()
+        return self.get_id_from_tone(lowest_tone)
 
     def play_all(self):
         for tone in self.active_tones.values():

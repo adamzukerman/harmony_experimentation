@@ -92,15 +92,79 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         pass
 
     def resolve_above_bass(tone_collection):
+        lowest_id = tone_collection.get_id_lowest_tone()
+        resolve_with_exclusions([lowest_id])
+    
+    def resolve_helper(freqs, temp_collection, excluded_ids=None):
+        if excluded_ids is None:
+            excluded_ids = []
+        for (id, tone), new_freq in zip(temp_collection, freqs):
+            if id in excluded_ids:
+                continue
+            tone.set_fund_freq(new_freq)
+        return temp_collection.calc_dissonance()
+    
+    def resolve_all():
+        temp_collection = tone_collection.copy()
         lowest_tone = tone_collection.get_lowest_tone()
         lowest_tone_id = tone_collection.get_id_from_tone(lowest_tone)
+        lowest_freq = tone_collection.get_ids_and_freqs()[lowest_tone_id]
         slctd_tone_id_backup = tone_collection.slctd_tone_id
-        for tone_id, tone in tone_collection:
-            if lowest_tone == tone:
-                continue
-            tone_collection.set_selected_tone(tone_id)
-            tune_selected_tone(tone_collection)
-        tone_collection.set_selected_tone(slctd_tone_id_backup)
+        
+        # start with geiven frequencies and asjust them inside window of 3 half steps
+        x0 = temp_collection.get_fund_freqs()
+        bounds = [[max(lowest_freq, freq * pow(2, -1/12)), freq*pow(2, 1/12)] for freq in x0]
+
+        solution = minimize(
+            fun=lambda x: resolve_helper(x, temp_collection),
+            x0=temp_collection.get_fund_freqs(),
+            bounds=bounds,
+            options={
+                "disp":True, 
+                "xrtol":0.001,
+                "gtol":1e-5
+            },
+            # method='trust-constr',
+            method='BFGS',
+        )
+        logger.info(f"Solution that minimizes dissonance: {solution}")
+
+        for (id, tone), freq in zip(tone_collection, solution.x):
+            tone_collection.set_tone_freq(id, freq)
+
+    def resolve_with_exclusions(excluded_ids=None):
+        id_freq_dict = tone_collection.get_ids_and_freqs()
+        temp_collection = tone_collection.copy()
+        # Can't just remove from temp_collection because it have to use exluded tones to calculate dossonance
+        # for id in excluded_ids:
+        #     temp_collection.remove_tone(id)
+        
+        # start with geiven frequencies and asjust them inside window of 3 half steps
+        # x0 = temp_collection.get_fund_freqs()
+        x0 = []
+        x0_id_dict = {}
+        for id, tone in temp_collection:
+            if id in excluded_ids:
+                continue 
+            x0_id_dict[id] = len(x0)
+            x0.append(tone.get_fund_freq())
+        bounds = [[freq * pow(2, -1/12), freq*pow(2, 1/12)] for freq in x0]
+        logger.info(f"optimization param lengths -- x0:{len(x0)}, bounds:{len(bounds)}")
+        logger.info(f"optimizing with params x0={x0}, bounds={bounds}")
+
+        solution = minimize(
+            fun=lambda x: resolve_helper(x, temp_collection, excluded_ids),
+            x0=x0,
+            bounds=bounds,
+            options={"disp":True},
+            method='trust-constr',
+        )
+        logger.info(f"Solution that minimizes dissonance: {solution}")
+
+        for tone_id, indx in x0_id_dict.items():
+            tone_collection.set_tone_freq(tone_id, solution.x[indx])
+        # for (id, tone), freq in zip(tone_collection, solution.x):
+        #     tone_collection.set_tone_freq(id, freq)
 
     def select_next_tone() -> None:
         logger.info("running select_next_tone")
@@ -164,6 +228,7 @@ def on_press(key, tone_collection, tone_trails, tone_dots, freq_histories, globa
         kb.KeyCode.from_char("t"): lambda: tune_selected_tone(tone_collection),
         kb.KeyCode.from_char("r"): resolve_tone,
         kb.KeyCode.from_char("R"): lambda: resolve_above_bass(tone_collection),
+        kb.KeyCode.from_char("."): resolve_all,
         kb.KeyCode.from_char("i"): align_tone_with_piano,
         kb.KeyCode.from_char("I"): align_all_tones_with_piano,
         kb.KeyCode.from_char("m"): tone_collection.reduce_dissonance,

@@ -59,6 +59,8 @@ logger.info(str(note2))
 # note2.set_random_overtones(15)
 a4_overtones_df = pd.read_csv('./A4_overtones.csv')
 a4_overtones = {freq_mul:strength for freq_mul, strength in zip(a4_overtones_df["freq_mul"], a4_overtones_df["strength"])}
+# Increase the non-fundamental frequencies for testing
+a4_overtones = {freq_mul:strength*(1 if freq_mul != 1 else 1) for freq_mul, strength in a4_overtones.items()}
 logger.info(f"setting overtones to: {a4_overtones}")
 note1.set_overtones(a4_overtones)
 note2.set_overtones(a4_overtones)
